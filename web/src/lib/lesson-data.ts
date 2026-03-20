@@ -29,6 +29,7 @@ export type LessonPlanStepMeta = {
   contentItemId: string;
   contentTitle: string;
   effectiveContentVersionId: string;
+  requiresQuiz: boolean;
 };
 
 export type ArticleSnapshotRead = {
@@ -60,6 +61,34 @@ export type LearnerLessonViewModel = {
   /** Index of first step whose article is not completed; `steps.length` when all done */
   activeStepIndex: number;
 };
+
+export type QuizChoice = { id: string; label: string };
+
+/** Questions shown in the browser (no correct answer). */
+export type QuizQuestionPublic = {
+  id: string;
+  questionIndex: number;
+  questionText: string;
+  choices: QuizChoice[];
+  maxPoints: number;
+};
+
+function parseQuizChoices(raw: unknown): QuizChoice[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  const out: QuizChoice[] = [];
+  for (const c of raw) {
+    if (!c || typeof c !== "object") {
+      continue;
+    }
+    const o = c as Record<string, unknown>;
+    if (typeof o.id === "string" && typeof o.label === "string") {
+      out.push({ id: o.id, label: o.label });
+    }
+  }
+  return out;
+}
 
 export async function listLessonPlansForLessonsPage(): Promise<LessonPlanSummary[]> {
   const supabase = getSupabaseServerClient();
@@ -217,6 +246,7 @@ export async function getLessonPlanSteps(
       sequence,
       content_item_id,
       effective_content_version_id,
+      requires_quiz,
       content_item ( title )
     `,
     )
@@ -232,6 +262,7 @@ export async function getLessonPlanSteps(
     sequence: number;
     content_item_id: string;
     effective_content_version_id: string;
+    requires_quiz: boolean;
     content_item: unknown;
   };
 
@@ -246,6 +277,74 @@ export async function getLessonPlanSteps(
     contentItemId: row.content_item_id,
     contentTitle: contentTitleFromEmbed(row.content_item),
     effectiveContentVersionId: row.effective_content_version_id,
+    requiresQuiz: row.requires_quiz,
+  }));
+}
+
+/** Full quiz row for server-side scoring (includes correct answer). */
+export type QuizQuestionScoreRow = {
+  id: string;
+  correctChoiceId: string;
+  maxPoints: number;
+};
+
+export async function listQuizQuestionsPublicForLessonPlanItem(
+  lessonPlanItemId: string,
+): Promise<QuizQuestionPublic[]> {
+  const supabase = getSupabaseServerClient();
+
+  const { data: rows, error } = await supabase
+    .from("quiz_question")
+    .select("id, question_index, question_text, choices, max_points")
+    .eq("lesson_plan_item_id", lessonPlanItemId)
+    .order("question_index", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  type RawQ = {
+    id: string;
+    question_index: number;
+    question_text: string;
+    choices: unknown;
+    max_points: number;
+  };
+
+  return ((rows as RawQ[] | null) ?? []).map((row) => ({
+    id: row.id,
+    questionIndex: row.question_index,
+    questionText: row.question_text,
+    choices: parseQuizChoices(row.choices),
+    maxPoints: row.max_points,
+  }));
+}
+
+export async function loadQuizQuestionsForScoring(
+  lessonPlanItemId: string,
+): Promise<QuizQuestionScoreRow[]> {
+  const supabase = getSupabaseServerClient();
+
+  const { data: rows, error } = await supabase
+    .from("quiz_question")
+    .select("id, correct_choice_id, max_points")
+    .eq("lesson_plan_item_id", lessonPlanItemId)
+    .order("question_index", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  type RawS = {
+    id: string;
+    correct_choice_id: string;
+    max_points: number;
+  };
+
+  return ((rows as RawS[] | null) ?? []).map((row) => ({
+    id: row.id,
+    correctChoiceId: row.correct_choice_id,
+    maxPoints: row.max_points,
   }));
 }
 

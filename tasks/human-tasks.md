@@ -5,11 +5,12 @@ This checklist is for the things you do on your end before we build the prototyp
 ## 1) Supabase project (required)
 
 1. Create a new Supabase project (remote).
-2. **Database setup (no CLI / no Docker):** In **SQL Editor**, paste and run `supabase/paste-in-supabase-sql-editor.sql` once on a **new** project (schema + seed). If you already ran the schema and tables are **empty**, run only `supabase/seed.sql`. If seed failed halfway, run `supabase/clear-learn001-data.sql` then `seed.sql` again.
-3. Confirm you have these values available (these are the ones you already sent):
+2. **Database setup (no CLI / no Docker):** In **SQL Editor**, paste and run `supabase/paste-in-supabase-sql-editor.sql` once on a **new** project (schema + seed includes the `quiz_question` table and nine demo questions). If you already ran the schema and tables are **empty**, run only `supabase/seed.sql`. If seed failed halfway, run `supabase/clear-learn001-data.sql` then `seed.sql` again.
+3. **Lessons show “No quiz questions are configured”:** The app reads from `public.quiz_question`. That usually means the quiz table was added after your first setup, or the seed stopped before the quiz inserts. In SQL Editor: (a) run the `quiz_question` section from `supabase/migrations/20260320140000_quiz_question.sql` if the table is missing, then (b) run `supabase/seed-quiz-only.sql` (idempotent) **or** re-run the full `seed.sql` after `clear-learn001-data.sql` if you use the standard seeded UUIDs. Confirm with: `select count(*) from public.quiz_question;` → expect `9` for the default seed.
+4. Confirm you have these values available (these are the ones you already sent):
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` (used as the anon/publishable key for the browser)
-4. We will need the service role key later:
+5. We will need the service role key later:
    - You will add `SUPABASE_SERVICE_ROLE_KEY` after the agent creates `web/.env.local`.
 
 ## 2) Supabase Storage bucket name (optional for this prototype)

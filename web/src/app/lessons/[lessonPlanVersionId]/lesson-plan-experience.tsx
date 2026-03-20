@@ -10,6 +10,7 @@ import {
   markArticleCompletedAction,
   type ArticleReadBundle,
 } from "@/app/lessons/actions";
+import LessonQuizPanel from "@/app/lessons/lesson-quiz-panel";
 import ArticleReader from "@/components/article-reader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -291,23 +292,33 @@ export default function LessonPlanExperience({
             )}
           </Card>
 
-          <div className="flex flex-col gap-2">
-            <Button
-              type="button"
-              onClick={onMarkComplete}
-              disabled={
-                pendingComplete ||
-                !user.id.trim() ||
-                activeStep.articleStatus === "completed"
-              }
-            >
-              {pendingComplete ? "Saving…" : "Mark article completed"}
-            </Button>
-            <p className="text-muted-foreground max-w-md text-xs">
-              Quiz rules plug in during learn-005; this stub only tracks article
-              completion.
-            </p>
-          </div>
+          {activeStep.requiresQuiz ? (
+            <LessonQuizPanel
+              userId={user.id}
+              lessonPlanVersionId={lessonPlanVersionId}
+              lessonPlanItemId={activeStep.lessonPlanItemId}
+              requiresQuiz={activeStep.requiresQuiz}
+              articleCompleted={activeStep.articleStatus === "completed"}
+              onLessonModelUpdated={setModel}
+            />
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Button
+                type="button"
+                onClick={onMarkComplete}
+                disabled={
+                  pendingComplete ||
+                  !user.id.trim() ||
+                  activeStep.articleStatus === "completed"
+                }
+              >
+                {pendingComplete ? "Saving…" : "Mark article completed"}
+              </Button>
+              <p className="text-muted-foreground max-w-md text-xs">
+                This step has no quiz; mark it complete when you are done reading.
+              </p>
+            </div>
+          )}
 
           {articleBundle && articleBundle.related.length > 0 ? (
             <div className="flex flex-col gap-3 border-t border-border pt-6">
@@ -333,8 +344,8 @@ export default function LessonPlanExperience({
         <Card className="border-dashed bg-muted/30 p-6">
           <p className="font-medium">Lesson complete</p>
           <p className="text-muted-foreground mt-1 text-sm">
-            You&apos;ve finished every article in this plan. Quizzes will refine
-            completion in a later phase.
+            You&apos;ve passed the quizzes (or marked steps) for every item in
+            this plan.
           </p>
           <Link
             href="/lessons"

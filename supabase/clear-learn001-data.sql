@@ -8,6 +8,7 @@ truncate table
   public.quiz_attempt,
   public.lesson_item_progress,
   public.learner_progress,
+  public.quiz_question,
   public.lesson_plan_item,
   public.lesson_plan_version,
   public.lesson_plan,

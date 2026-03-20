@@ -10,6 +10,7 @@ union all select 'lesson_plan_item', count(*)::int from public.lesson_plan_item
 union all select 'learner_progress', count(*)::int from public.learner_progress
 union all select 'lesson_item_progress', count(*)::int from public.lesson_item_progress
 union all select 'quiz_attempt', count(*)::int from public.quiz_attempt
+union all select 'quiz_question', count(*)::int from public.quiz_question
 union all select 'highlight', count(*)::int from public.highlight
 union all select 'comment', count(*)::int from public.comment
 union all select 'comment_ai_response', count(*)::int from public.comment_ai_response
