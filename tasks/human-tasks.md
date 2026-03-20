@@ -5,7 +5,7 @@ This checklist is for the things you do on your end before we build the prototyp
 ## 1) Supabase project (required)
 
 1. Create a new Supabase project (remote).
-2. **Database setup (no CLI / no Docker):** In the Supabase dashboard open **SQL Editor**, paste the full contents of `supabase/paste-in-supabase-sql-editor.sql`, and run it once on a fresh project. (That file is schema + seed for learn-001.)
+2. **Database setup (no CLI / no Docker):** In **SQL Editor**, paste and run `supabase/paste-in-supabase-sql-editor.sql` once on a **new** project (schema + seed). If you already ran the schema and tables are **empty**, run only `supabase/seed.sql`. If seed failed halfway, run `supabase/clear-learn001-data.sql` then `seed.sql` again.
 3. Confirm you have these values available (these are the ones you already sent):
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` (used as the anon/publishable key for the browser)

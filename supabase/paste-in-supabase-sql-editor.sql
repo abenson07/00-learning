@@ -4,7 +4,10 @@
 -- Where: Supabase Dashboard → SQL Editor → New query → paste → Run
 --
 -- Use on a fresh project OR after you drop the learn-001 tables. Re-running
--- against existing tables will error on "already exists".
+-- the CREATE TABLE section will error on "already exists".
+--
+-- If you already have empty tables: skip to `seed.sql` (or the "--- Seed ---" section
+-- below) and run only that. If seed partially ran, run `clear-learn001-data.sql` then `seed.sql`.
 --
 -- Same content as: migrations/20260320120000_initial_schema.sql + seed.sql
 -- =============================================================================

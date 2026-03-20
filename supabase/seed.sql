@@ -1,4 +1,7 @@
--- learn-001 seed: taxonomy, three articles, one lesson plan with three items
+-- learn-001 seed ONLY (requires schema already applied — empty tables).
+-- Supabase → SQL Editor: paste this whole file and Run.
+-- After: domain should have 2 rows; content_item 3; content_version 3; lesson_plan 1.
+-- If you get duplicate-key errors, run clear-learn001-data.sql first, then this file again.
 
 -- Taxonomy (technical → databases → postgres_basics; agent → prompting → LLM_reasoning)
 insert into public.domain (id, name, slug, sort_order) values
