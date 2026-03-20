@@ -14,12 +14,12 @@ Auth/roles are mocked in the app for now; this phase focuses on correctness of t
 
 ## Supabase project wiring
 
-The agent will create a Supabase CLI project in `supabase/`:
+**Fastest path (hosted only):** paste `supabase/paste-in-supabase-sql-editor.sql` into the Supabase **SQL Editor** and run once. That file is the full learn-001 schema + seed (same as `migrations/` + `seed.sql` combined).
 
-- `mkdir -p supabase`
-- `cd supabase && supabase init`
-- The agent will then link migrations to your remote project:
-  - `supabase link`
+Optional CLI layout in `supabase/` (for teams that use `supabase link` / `db push` later):
+
+- `supabase init` (already done in this repo)
+- Remote: `supabase link` then `supabase db push` if you prefer migrations over paste
 
 ## Database design (required tables)
 

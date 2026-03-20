@@ -5,10 +5,11 @@ This checklist is for the things you do on your end before we build the prototyp
 ## 1) Supabase project (required)
 
 1. Create a new Supabase project (remote).
-2. Confirm you have these values available (these are the ones you already sent):
+2. **Database setup (no CLI / no Docker):** In the Supabase dashboard open **SQL Editor**, paste the full contents of `supabase/paste-in-supabase-sql-editor.sql`, and run it once on a fresh project. (That file is schema + seed for learn-001.)
+3. Confirm you have these values available (these are the ones you already sent):
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` (used as the anon/publishable key for the browser)
-3. We will need the service role key later:
+4. We will need the service role key later:
    - You will add `SUPABASE_SERVICE_ROLE_KEY` after the agent creates `web/.env.local`.
 
 ## 2) Supabase Storage bucket name (optional for this prototype)
