@@ -36,6 +36,7 @@ export type ArticleSnapshotRead = {
   title: string;
   slug: string;
   topicId: string;
+  topicName: string;
   plainText: string;
   contentRichJson: unknown;
   version: {
@@ -130,7 +131,15 @@ export async function listLessonPlansForLessonsPage(): Promise<LessonPlanSummary
     })
     .filter((r): r is NonNullable<typeof r> => r != null)
     .sort((a, b) => a.sort_order - b.sort_order)
-    .map(({ sort_order: _s, ...rest }) => rest);
+    .map(
+      (r): LessonPlanSummary => ({
+        lessonPlanId: r.lessonPlanId,
+        title: r.title,
+        description: r.description,
+        domainName: r.domainName,
+        versionId: r.versionId,
+      }),
+    );
 }
 
 export async function getLessonPlanVersionMeta(
@@ -275,11 +284,22 @@ export async function getArticleSnapshotByVersionId(
     return null;
   }
 
+  const { data: topic, error: topicError } = await supabase
+    .from("topic")
+    .select("name")
+    .eq("id", item.topic_id)
+    .maybeSingle();
+
+  if (topicError) {
+    throw new Error(topicError.message);
+  }
+
   return {
     contentItemId: item.id,
     title: item.title,
     slug: item.slug,
     topicId: item.topic_id,
+    topicName: topic?.name ?? "Topic",
     plainText: version.plain_text,
     contentRichJson: version.content_rich_json,
     version: {

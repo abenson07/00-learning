@@ -128,3 +128,39 @@
     @apply font-sans;
   }
 }
+
+/* ProseMirror inline decorations (learn-004 reader highlights) */
+.article-highlight-deco {
+  border-radius: 0.125rem;
+  background-color: color-mix(in srgb, #ffeb3b 52%, transparent);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.dark .article-highlight-deco {
+  background-color: color-mix(in srgb, #fdd835 40%, transparent);
+}
+
+/*
+ * Native text drag-selection uses ::selection, not our decorations.
+ * Match highlighter yellow so “selecting” looks like highlighting.
+ */
+.article-body ::selection {
+  background-color: color-mix(in srgb, #ffeb3b 58%, transparent);
+  color: inherit;
+}
+
+.article-body ::-moz-selection {
+  background-color: color-mix(in srgb, #ffeb3b 58%, transparent);
+  color: inherit;
+}
+
+.dark .article-body ::selection {
+  background-color: color-mix(in srgb, #fdd835 45%, transparent);
+  color: inherit;
+}
+
+.dark .article-body ::-moz-selection {
+  background-color: color-mix(in srgb, #fdd835 45%, transparent);
+  color: inherit;
+}

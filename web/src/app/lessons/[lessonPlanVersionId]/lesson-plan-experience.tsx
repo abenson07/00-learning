@@ -10,9 +10,9 @@ import {
   markArticleCompletedAction,
   type ArticleReadBundle,
 } from "@/app/lessons/actions";
+import ArticleReader from "@/components/article-reader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { richJsonToHtml } from "@/lib/rich-text";
 import { useMockUserFromStorage } from "@/lib/use-mock-user-from-storage";
 import type { LearnerLessonViewModel } from "@/lib/lesson-data";
 
@@ -156,9 +156,12 @@ export default function LessonPlanExperience({
           : `Step ${model.activeStepIndex + 1} of ${model.steps.length}`
         : "No steps in this version";
 
-  const html = articleBundle?.snapshot
-    ? richJsonToHtml(articleBundle.snapshot.contentRichJson)
-    : "";
+  const relatedArticlesInLesson =
+    model && activeStep
+      ? model.steps
+          .filter((s) => s.contentItemId !== activeStep.contentItemId)
+          .map((s) => ({ id: s.contentItemId, title: s.contentTitle }))
+      : [];
 
   return (
     <div className="flex flex-col gap-8">
@@ -274,16 +277,14 @@ export default function LessonPlanExperience({
                       : ""}
                   </p>
                 </div>
-                {html ? (
-                  <div
-                    className="article-body max-w-none text-[0.975rem] leading-relaxed [&_p]:mb-3 [&_p:last-child]:mb-0"
-                    dangerouslySetInnerHTML={{ __html: html }}
-                  />
-                ) : (
-                  <p className="text-muted-foreground whitespace-pre-wrap">
-                    {articleBundle.snapshot.plainText}
-                  </p>
-                )}
+                <ArticleReader
+                  contentItemId={articleBundle.snapshot.contentItemId}
+                  contentVersionId={articleBundle.snapshot.version.id}
+                  canonicalPlainText={articleBundle.snapshot.plainText}
+                  contentRichJson={articleBundle.snapshot.contentRichJson}
+                  topicName={articleBundle.snapshot.topicName}
+                  relatedArticles={relatedArticlesInLesson}
+                />
               </>
             ) : (
               <p className="text-muted-foreground text-sm">Loading article…</p>

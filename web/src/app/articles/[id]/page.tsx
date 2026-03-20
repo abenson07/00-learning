@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import ArticleReader from "@/components/article-reader";
+import MockUserSwitcher from "@/components/mock-user-switcher";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -8,7 +10,6 @@ import {
   librarySelectionHref,
   listRelatedContentItems,
 } from "@/lib/library-data";
-import { richJsonToHtml } from "@/lib/rich-text";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,6 @@ export default async function ArticlePage({
     notFound();
   }
 
-  const html = richJsonToHtml(article.content_rich_json);
   const libraryBack = librarySelectionHref({
     domainId: article.breadcrumb.domain.id,
     categoryId: article.breadcrumb.category.id,
@@ -37,6 +37,7 @@ export default async function ArticlePage({
 
   return (
     <div className="flex flex-col gap-8">
+      <MockUserSwitcher />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex flex-col gap-2">
           <nav className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
@@ -66,33 +67,15 @@ export default async function ArticlePage({
       </div>
 
       <Card className="p-4 sm:p-6">
-        {html ? (
-          <div
-            className="article-body max-w-none text-[0.975rem] leading-relaxed [&_p]:mb-3 [&_p:last-child]:mb-0"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
-        ) : (
-          <p className="text-muted-foreground whitespace-pre-wrap">
-            {article.plain_text}
-          </p>
-        )}
+        <ArticleReader
+          contentItemId={article.id}
+          contentVersionId={article.version.id}
+          canonicalPlainText={article.plain_text}
+          contentRichJson={article.content_rich_json}
+          topicName={article.breadcrumb.topic.name}
+          relatedArticles={related}
+        />
       </Card>
-
-      <div className="flex flex-col gap-3 border-t border-border pt-6">
-        <Button
-          type="button"
-          className="w-fit"
-          variant="outline"
-          disabled
-          title="Q&A arrives in learn-004"
-        >
-          Ask a question
-        </Button>
-        <p className="text-muted-foreground max-w-md text-xs">
-          Highlighting, comments, and AI-assisted answers will plug in here in a
-          later phase.
-        </p>
-      </div>
 
       {related.length > 0 ? (
         <section className="flex flex-col gap-3">
