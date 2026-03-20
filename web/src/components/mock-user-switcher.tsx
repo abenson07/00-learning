@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DEFAULT_MOCK_USER,
+  MOCK_USER_CHANGED_EVENT,
   MOCK_USER_STORAGE_KEY,
   type MockUser,
   type MockUserRole,
@@ -44,6 +45,11 @@ export default function MockUserSwitcher() {
       localStorage.setItem(MOCK_USER_STORAGE_KEY, JSON.stringify(user));
     } catch {
       // ignore storage failures in prototype mode
+    }
+    try {
+      window.dispatchEvent(new Event(MOCK_USER_CHANGED_EVENT));
+    } catch {
+      // ignore if window is unavailable
     }
   }, [isLoaded, user]);
 

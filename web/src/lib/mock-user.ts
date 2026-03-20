@@ -12,3 +12,6 @@ export const DEFAULT_MOCK_USER: MockUser = {
 
 export const MOCK_USER_STORAGE_KEY = "learning_platform_mock_user_v1";
 
+/** Fired on `window` when the mock user changes (same-tab updates). */
+export const MOCK_USER_CHANGED_EVENT = "learning_platform_mock_user_changed";
+
