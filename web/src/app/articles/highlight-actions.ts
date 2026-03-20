@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/auth/server";
+import { createSupabaseUserServerClient } from "@/lib/supabase/server-user";
 
 export type HighlightRow = {
   id: string;
@@ -12,20 +13,19 @@ export type HighlightRow = {
 };
 
 export async function listHighlightsForVersionAction(
-  userId: string,
   contentVersionId: string,
 ): Promise<HighlightRow[]> {
-  const uid = userId.trim();
-  if (!uid) {
+  const auth = await getAuthUser();
+  if (!auth) {
     return [];
   }
-
-  const supabase = getSupabaseServerClient();
+  const { userId } = auth;
+  const supabase = await createSupabaseUserServerClient();
   const { data, error } = await supabase
     .from("highlight")
     .select("id, plain_text_start, plain_text_end, created_at")
     .eq("content_version_id", contentVersionId)
-    .eq("created_by_user_id", uid)
+    .eq("created_by_user_id", userId)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -36,16 +36,16 @@ export async function listHighlightsForVersionAction(
 }
 
 export async function createHighlightAction(input: {
-  userId: string;
   contentItemId: string;
   contentVersionId: string;
   plainTextStart: number;
   plainTextEnd: number;
 }): Promise<{ ok: true; id: string } | { ok: false; message: string }> {
-  const uid = input.userId.trim();
-  if (!uid) {
-    return { ok: false, message: "Pick a mock user first." };
+  const auth = await getAuthUser();
+  if (!auth) {
+    return { ok: false, message: "You must be signed in to save highlights." };
   }
+  const { userId } = auth;
 
   const start = Math.floor(input.plainTextStart);
   const end = Math.floor(input.plainTextEnd);
@@ -54,7 +54,7 @@ export async function createHighlightAction(input: {
     return { ok: false, message: "Selection is too short to highlight." };
   }
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await createSupabaseUserServerClient();
 
   const { data: version, error: verErr } = await supabase
     .from("content_version")
@@ -84,7 +84,7 @@ export async function createHighlightAction(input: {
       content_version_id: input.contentVersionId,
       plain_text_start: start,
       plain_text_end: end,
-      created_by_user_id: uid,
+      created_by_user_id: userId,
     })
     .select("id")
     .single();
@@ -98,22 +98,22 @@ export async function createHighlightAction(input: {
 }
 
 export async function deleteHighlightAction(input: {
-  userId: string;
   contentItemId: string;
   contentVersionId: string;
   highlightId: string;
 }): Promise<{ ok: true } | { ok: false; message: string }> {
-  const uid = input.userId.trim();
-  if (!uid) {
-    return { ok: false, message: "Pick a mock user first." };
+  const auth = await getAuthUser();
+  if (!auth) {
+    return { ok: false, message: "You must be signed in." };
   }
+  const { userId } = auth;
 
   const highlightId = input.highlightId.trim();
   if (!highlightId) {
     return { ok: false, message: "Missing highlight." };
   }
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await createSupabaseUserServerClient();
 
   const { data: row, error: fetchErr } = await supabase
     .from("highlight")
@@ -127,7 +127,7 @@ export async function deleteHighlightAction(input: {
   if (!row) {
     return { ok: false, message: "Highlight not found." };
   }
-  if (row.created_by_user_id !== uid) {
+  if (row.created_by_user_id !== userId) {
     return { ok: false, message: "You can only remove your own highlights." };
   }
   if (row.content_version_id !== input.contentVersionId) {
@@ -151,7 +151,7 @@ export async function deleteHighlightAction(input: {
     .from("highlight")
     .delete()
     .eq("id", highlightId)
-    .eq("created_by_user_id", uid);
+    .eq("created_by_user_id", userId);
 
   if (delErr) {
     return { ok: false, message: delErr.message };

@@ -1,20 +1,22 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import {
   ensureLearnerProgressAction,
-  getArticleReadBundleAction,
+  getArticleReadBundleForLessonStepAction,
   loadLearnerLessonViewAction,
   markArticleCompletedAction,
+  regenerateLessonPlanWithLatestAction,
   type ArticleReadBundle,
 } from "@/app/lessons/actions";
 import LessonQuizPanel from "@/app/lessons/lesson-quiz-panel";
 import ArticleReader from "@/components/article-reader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useMockUserFromStorage } from "@/lib/use-mock-user-from-storage";
+import { useAuthUser } from "@/lib/use-auth-user";
 import type { LearnerLessonViewModel } from "@/lib/lesson-data";
 
 type Props = {
@@ -24,13 +26,28 @@ type Props = {
   description: string | null;
 };
 
+function renderAddendumMarkdown(text: string) {
+  return text.split("\n").map((line, lineIdx) => (
+    <p key={lineIdx} className="mb-2 last:mb-0">
+      {line.split(/(\*\*.+?\*\*)/g).map((seg, i) => {
+        const m = /^\*\*(.+?)\*\*$/.exec(seg);
+        if (m) {
+          return <strong key={i}>{m[1]}</strong>;
+        }
+        return seg;
+      })}
+    </p>
+  ));
+}
+
 export default function LessonPlanExperience({
   lessonPlanVersionId,
   planTitle,
   domainName,
   description,
 }: Props) {
-  const { user, ready } = useMockUserFromStorage();
+  const router = useRouter();
+  const { user, ready } = useAuthUser();
   const [model, setModel] = useState<LearnerLessonViewModel | null>(null);
   const [articleBundle, setArticleBundle] = useState<ArticleReadBundle | null>(
     null,
@@ -39,26 +56,21 @@ export default function LessonPlanExperience({
   const [actionError, setActionError] = useState<string | null>(null);
   const [pendingStart, setPendingStart] = useState(false);
   const [pendingComplete, setPendingComplete] = useState(false);
+  const [pendingRegenerate, setPendingRegenerate] = useState(false);
   const [progressLoading, setProgressLoading] = useState(true);
 
   const refreshModel = useCallback(async () => {
-    const uid = user.id.trim();
-    if (!uid) {
-      setProgressLoading(false);
-      setModel(null);
-      return;
-    }
     setLoadError(null);
     setProgressLoading(true);
     try {
-      const next = await loadLearnerLessonViewAction(uid, lessonPlanVersionId);
+      const next = await loadLearnerLessonViewAction(lessonPlanVersionId);
       setModel(next);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "Failed to load progress");
     } finally {
       setProgressLoading(false);
     }
-  }, [lessonPlanVersionId, user.id]);
+  }, [lessonPlanVersionId]);
 
   useEffect(() => {
     if (!ready) {
@@ -80,10 +92,13 @@ export default function LessonPlanExperience({
     let cancelled = false;
     (async () => {
       try {
-        const bundle = await getArticleReadBundleAction(
-          activeStep.contentItemId,
-          activeStep.effectiveContentVersionId,
-        );
+        const bundle = await getArticleReadBundleForLessonStepAction({
+          contentItemId: activeStep.contentItemId,
+          articleStatus: activeStep.articleStatus,
+          completedContentVersionId: activeStep.completedContentVersionId,
+          effectiveContentVersionId: activeStep.effectiveContentVersionId,
+          contentItemCurrentVersionId: activeStep.contentItemCurrentVersionId,
+        });
         if (!cancelled) {
           setArticleBundle(bundle);
         }
@@ -99,14 +114,13 @@ export default function LessonPlanExperience({
   }, [activeStep]);
 
   async function onStartLesson() {
-    const uid = user.id.trim();
-    if (!uid) {
+    if (!user) {
       return;
     }
     setActionError(null);
     setPendingStart(true);
     try {
-      const next = await ensureLearnerProgressAction(uid, lessonPlanVersionId);
+      const next = await ensureLearnerProgressAction(lessonPlanVersionId);
       setModel(next);
     } catch (e) {
       setActionError(e instanceof Error ? e.message : "Could not start lesson");
@@ -115,19 +129,36 @@ export default function LessonPlanExperience({
     }
   }
 
+  async function onRegenerateLessonPlan() {
+    if (!user) {
+      return;
+    }
+    setActionError(null);
+    setPendingRegenerate(true);
+    try {
+      const { newLessonPlanVersionId } =
+        await regenerateLessonPlanWithLatestAction(lessonPlanVersionId);
+      router.push(`/lessons/${newLessonPlanVersionId}`);
+    } catch (e) {
+      setActionError(
+        e instanceof Error ? e.message : "Could not regenerate lesson plan",
+      );
+    } finally {
+      setPendingRegenerate(false);
+    }
+  }
+
   async function onMarkComplete() {
     if (!activeStep || !model?.learnerProgressId) {
       return;
     }
-    const uid = user.id.trim();
-    if (!uid) {
+    if (!user) {
       return;
     }
     setActionError(null);
     setPendingComplete(true);
     try {
       const next = await markArticleCompletedAction(
-        uid,
         lessonPlanVersionId,
         activeStep.lessonPlanItemId,
       );
@@ -181,6 +212,24 @@ export default function LessonPlanExperience({
           {domainName}
           {description ? ` · ${description}` : ""}
         </p>
+        {model?.learnerProgressId && model.canRegenerateLessonPlan ? (
+          <div className="mt-3">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!ready || pendingRegenerate || !user}
+              onClick={onRegenerateLessonPlan}
+            >
+              {pendingRegenerate
+                ? "Regenerating…"
+                : "Regenerate lesson plan with latest updates"}
+            </Button>
+            <p className="text-muted-foreground mt-2 max-w-xl text-xs">
+              Rebuilds your plan snapshot from the newest article versions. Steps
+              whose content changed reset to pending so you can retake quizzes.
+            </p>
+          </div>
+        ) : null}
       </div>
 
       {loadError ? (
@@ -213,7 +262,7 @@ export default function LessonPlanExperience({
           <Button
             type="button"
             onClick={onStartLesson}
-            disabled={!ready || pendingStart || !user.id.trim()}
+            disabled={!ready || pendingStart || !user}
           >
             {pendingStart ? "Starting…" : "Start lesson"}
           </Button>
@@ -278,9 +327,24 @@ export default function LessonPlanExperience({
                       : ""}
                   </p>
                 </div>
+                {articleBundle.addendumMarkdown ? (
+                  <div
+                    className="mb-6 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-amber-950 dark:border-amber-400/35 dark:bg-amber-400/10 dark:text-amber-50"
+                    role="region"
+                    aria-label="Addendum"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-900/80 dark:text-amber-100/90">
+                      Addendum
+                    </p>
+                    <div className="mt-2 text-sm">
+                      {renderAddendumMarkdown(articleBundle.addendumMarkdown)}
+                    </div>
+                  </div>
+                ) : null}
                 <ArticleReader
                   contentItemId={articleBundle.snapshot.contentItemId}
                   contentVersionId={articleBundle.snapshot.version.id}
+                  articleTitle={articleBundle.snapshot.title}
                   canonicalPlainText={articleBundle.snapshot.plainText}
                   contentRichJson={articleBundle.snapshot.contentRichJson}
                   topicName={articleBundle.snapshot.topicName}
@@ -294,7 +358,6 @@ export default function LessonPlanExperience({
 
           {activeStep.requiresQuiz ? (
             <LessonQuizPanel
-              userId={user.id}
               lessonPlanVersionId={lessonPlanVersionId}
               lessonPlanItemId={activeStep.lessonPlanItemId}
               requiresQuiz={activeStep.requiresQuiz}
@@ -308,7 +371,7 @@ export default function LessonPlanExperience({
                 onClick={onMarkComplete}
                 disabled={
                   pendingComplete ||
-                  !user.id.trim() ||
+                  !user ||
                   activeStep.articleStatus === "completed"
                 }
               >

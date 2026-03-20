@@ -9,11 +9,18 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  addArticleCommentAction,
+  addCommentOnHighlightAction,
+  listCommentsForVersionAction,
+  type CommentWithAi,
+} from "@/app/articles/comment-actions";
+import {
   createHighlightAction,
   deleteHighlightAction,
   listHighlightsForVersionAction,
   type HighlightRow,
 } from "@/app/articles/highlight-actions";
+import ArticleChatPanel from "@/components/article-chat-panel";
 import {
   ARTICLE_HIGHLIGHT_RANGES_META,
   ArticleHighlightDecorations,
@@ -25,7 +32,7 @@ import {
   pmDocPlainText,
   TIPTAP_PLAIN_BLOCK_SEPARATOR,
 } from "@/lib/tiptap-plain-text";
-import { useMockUserFromStorage } from "@/lib/use-mock-user-from-storage";
+import { useAuthUser } from "@/lib/use-auth-user";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -42,6 +49,8 @@ function isUsableRichDoc(value: unknown): value is JSONContent {
 export type ArticleReaderProps = {
   contentItemId: string;
   contentVersionId: string;
+  /** Used for chat / AI context */
+  articleTitle: string;
   canonicalPlainText: string;
   contentRichJson: unknown;
   /** Sidebar: current taxonomy topic */
@@ -177,13 +186,22 @@ function analyzeHighlightOffer(
 export default function ArticleReader({
   contentItemId,
   contentVersionId,
+  articleTitle,
   canonicalPlainText,
   contentRichJson,
   topicName,
   relatedArticles = [],
 }: ArticleReaderProps) {
-  const { user, ready: userReady } = useMockUserFromStorage();
+  const { user, ready: userReady } = useAuthUser();
   const [highlights, setHighlights] = useState<HighlightRow[]>([]);
+  const [comments, setComments] = useState<CommentWithAi[]>([]);
+  const [selectedHighlightId, setSelectedHighlightId] = useState<string | null>(
+    null,
+  );
+  const [highlightCommentDraft, setHighlightCommentDraft] = useState("");
+  const [articleCommentDraft, setArticleCommentDraft] = useState("");
+  const [commentBusy, setCommentBusy] = useState(false);
+  const [commentErr, setCommentErr] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -212,19 +230,31 @@ export default function ArticleReader({
   }, [richDoc]);
 
   const loadHighlights = useCallback(async () => {
-    const uid = user.id.trim();
-    if (!uid) {
+    if (!userReady || !user) {
       setHighlights([]);
       return;
     }
     setLoadError(null);
     try {
-      const rows = await listHighlightsForVersionAction(uid, contentVersionId);
+      const rows = await listHighlightsForVersionAction(contentVersionId);
       setHighlights(rows);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "Failed to load highlights");
     }
-  }, [user.id, contentVersionId]);
+  }, [user, userReady, contentVersionId]);
+
+  const loadComments = useCallback(async () => {
+    if (!userReady || !user) {
+      setComments([]);
+      return;
+    }
+    try {
+      const rows = await listCommentsForVersionAction(contentVersionId);
+      setComments(rows);
+    } catch {
+      setComments([]);
+    }
+  }, [user, userReady, contentVersionId]);
 
   useEffect(() => {
     if (!userReady) {
@@ -232,9 +262,10 @@ export default function ArticleReader({
     }
     const id = window.setTimeout(() => {
       void loadHighlights();
+      void loadComments();
     }, 0);
     return () => clearTimeout(id);
-  }, [userReady, loadHighlights]);
+  }, [userReady, loadHighlights, loadComments]);
 
   const editor = useEditor(
     {
@@ -283,7 +314,6 @@ export default function ArticleReader({
       setSaveError(null);
       try {
         const result = await createHighlightAction({
-          userId: user.id,
           contentItemId,
           contentVersionId,
           plainTextStart: plainStart,
@@ -298,7 +328,7 @@ export default function ArticleReader({
         setSaving(false);
       }
     },
-    [user.id, contentItemId, contentVersionId, loadHighlights],
+    [contentItemId, contentVersionId, loadHighlights],
   );
 
   const removeHighlight = useCallback(
@@ -307,7 +337,6 @@ export default function ArticleReader({
       setDeletingId(highlightId);
       try {
         const result = await deleteHighlightAction({
-          userId: user.id,
           contentItemId,
           contentVersionId,
           highlightId,
@@ -321,7 +350,7 @@ export default function ArticleReader({
         setDeletingId(null);
       }
     },
-    [user.id, contentItemId, contentVersionId, loadHighlights],
+    [contentItemId, contentVersionId, loadHighlights],
   );
 
   useEffect(() => {
@@ -344,7 +373,7 @@ export default function ArticleReader({
     function updateHighlightToolbar() {
       const offer = analyzeHighlightOffer(
         ed,
-        user.id,
+        user?.id ?? "",
         canonicalPlainText,
         highlights,
       );
@@ -416,27 +445,99 @@ export default function ArticleReader({
     richDoc,
     plainMismatch,
     userReady,
-    user.id,
+    user?.id,
     canonicalPlainText,
     highlights,
   ]);
 
+  const selectedHl = useMemo(
+    () => highlights.find((h) => h.id === selectedHighlightId) ?? null,
+    [highlights, selectedHighlightId],
+  );
+
+  async function submitHighlightComment() {
+    if (!selectedHl || !highlightCommentDraft.trim()) {
+      return;
+    }
+    setCommentErr(null);
+    setCommentBusy(true);
+    try {
+      const r = await addCommentOnHighlightAction({
+        contentItemId,
+        contentVersionId,
+        highlightId: selectedHl.id,
+        body: highlightCommentDraft,
+      });
+      if (!r.ok) {
+        setCommentErr(r.message);
+        return;
+      }
+      setHighlightCommentDraft("");
+      await loadComments();
+    } finally {
+      setCommentBusy(false);
+    }
+  }
+
+  async function submitArticleComment() {
+    if (!articleCommentDraft.trim()) {
+      return;
+    }
+    setCommentErr(null);
+    setCommentBusy(true);
+    try {
+      const r = await addArticleCommentAction({
+        contentItemId,
+        contentVersionId,
+        body: articleCommentDraft,
+      });
+      if (!r.ok) {
+        setCommentErr(r.message);
+        return;
+      }
+      setArticleCommentDraft("");
+      await loadComments();
+    } finally {
+      setCommentBusy(false);
+    }
+  }
+
+  const chatDisabled = !userReady || !user;
+  const hlStart = selectedHl?.plain_text_start ?? null;
+  const hlEnd = selectedHl?.plain_text_end ?? null;
+
   if (!richDoc) {
     return (
-      <div className="flex flex-col gap-4">
-        <p className="text-muted-foreground text-sm">
-          This article has no structured rich text yet, so highlights are
-          disabled. Plain text is shown below.
-        </p>
-        <p className="text-muted-foreground whitespace-pre-wrap text-[0.975rem] leading-relaxed">
-          {canonicalPlainText}
-        </p>
+      <div className="grid gap-6 xl:grid-cols-[minmax(15rem,18rem)_1fr] xl:items-start">
+        <ArticleChatPanel
+          articleTitle={articleTitle}
+          articlePlainText={canonicalPlainText}
+          highlightPlainStart={hlStart}
+          highlightPlainEnd={hlEnd}
+          disabled={chatDisabled}
+        />
+        <div className="flex flex-col gap-4">
+          <p className="text-muted-foreground text-sm">
+            This article has no structured rich text yet, so highlights are
+            disabled. Plain text is shown below.
+          </p>
+          <p className="text-muted-foreground whitespace-pre-wrap text-[0.975rem] leading-relaxed">
+            {canonicalPlainText}
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_minmax(14rem,17rem)] lg:items-start">
+    <div className="grid gap-6 xl:grid-cols-[minmax(15rem,18rem)_1fr_minmax(14rem,17rem)] xl:items-start">
+      <ArticleChatPanel
+        articleTitle={articleTitle}
+        articlePlainText={canonicalPlainText}
+        highlightPlainStart={hlStart}
+        highlightPlainEnd={hlEnd}
+        disabled={chatDisabled || plainMismatch}
+      />
       <div className="flex min-w-0 flex-col gap-2">
         {plainMismatch ? (
           <p className="text-destructive text-sm">
@@ -446,8 +547,10 @@ export default function ArticleReader({
         ) : (
           <p className="text-muted-foreground text-xs">
             Select text — a small toolbar appears above your selection to save a
-            highlight (mock user:{" "}
-            <span className="text-foreground font-medium">{user.id || "—"}</span>
+            highlight (signed in as{" "}
+            <span className="text-foreground font-medium">
+              {user?.email ?? user?.id ?? "—"}
+            </span>
             ).
             {saving ? " Saving…" : ""}
           </p>
@@ -510,7 +613,7 @@ export default function ArticleReader({
             ) : null}
             {highlightToolbar.offer.kind === "needs_user" ? (
               <span className="text-muted-foreground text-xs">
-                Pick a mock user to save highlights
+                Highlights can&apos;t be saved in this mode
               </span>
             ) : null}
             <Button
@@ -555,7 +658,16 @@ export default function ArticleReader({
                 return (
                   <li
                     key={h.id}
-                    className="border-border flex gap-1 rounded-md border bg-muted/40 py-1.5 pr-1 pl-2"
+                    className={`border-border flex cursor-pointer gap-1 rounded-md border py-1.5 pr-1 pl-2 ${
+                      selectedHighlightId === h.id
+                        ? "bg-primary/15 ring-2 ring-primary/30"
+                        : "bg-muted/40"
+                    }`}
+                    onClick={() =>
+                      setSelectedHighlightId((cur) =>
+                        cur === h.id ? null : h.id,
+                      )
+                    }
                   >
                     <div className="min-w-0 flex-1">
                       <span className="text-muted-foreground text-[0.65rem] uppercase tracking-wide">
@@ -572,13 +684,103 @@ export default function ArticleReader({
                       className="text-muted-foreground hover:text-destructive shrink-0 self-start"
                       aria-label="Remove highlight"
                       disabled={deletingId !== null}
-                      onClick={() => void removeHighlight(h.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void removeHighlight(h.id);
+                      }}
                     >
                       <X className="size-3.5" />
                     </Button>
                   </li>
                 );
               })}
+            </ul>
+          ) : null}
+        </Card>
+
+        <Card className="p-4">
+          <h2 className="text-sm font-medium">Notes &amp; questions</h2>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Comments are saved per article version. AI replies appear under each
+            note when configured.
+          </p>
+          {commentErr ? (
+            <p className="text-destructive mt-2 text-xs">{commentErr}</p>
+          ) : null}
+
+          {selectedHl ? (
+            <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
+              <p className="text-xs font-medium">Comment on selected highlight</p>
+              <textarea
+                className="border-border min-h-[4rem] w-full rounded-md border bg-background px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-ring/50"
+                placeholder="Add a note about this selection…"
+                value={highlightCommentDraft}
+                disabled={commentBusy || chatDisabled}
+                onChange={(e) => setHighlightCommentDraft(e.target.value)}
+              />
+              <Button
+                type="button"
+                size="sm"
+                disabled={
+                  commentBusy || chatDisabled || !highlightCommentDraft.trim()
+                }
+                onClick={() => void submitHighlightComment()}
+              >
+                {commentBusy ? "Saving…" : "Save comment + AI reply"}
+              </Button>
+            </div>
+          ) : (
+            <p className="text-muted-foreground mt-3 border-t border-border pt-3 text-xs">
+              Select a highlight in the list to attach a comment to it.
+            </p>
+          )}
+
+          <div className="mt-4 flex flex-col gap-2 border-t border-border pt-3">
+            <p className="text-xs font-medium">Ask about the article</p>
+            <textarea
+              className="border-border min-h-[4rem] w-full rounded-md border bg-background px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-ring/50"
+              placeholder="Question without a specific highlight…"
+              value={articleCommentDraft}
+              disabled={commentBusy || chatDisabled}
+              onChange={(e) => setArticleCommentDraft(e.target.value)}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={
+                commentBusy || chatDisabled || !articleCommentDraft.trim()
+              }
+              onClick={() => void submitArticleComment()}
+            >
+              {commentBusy ? "Saving…" : "Post question + AI reply"}
+            </Button>
+          </div>
+
+          {comments.length > 0 ? (
+            <ul className="mt-4 flex max-h-[min(36vh,22rem)] flex-col gap-3 overflow-y-auto border-t border-border pt-3 text-xs">
+              {comments.map((c) => (
+                <li
+                  key={c.id}
+                  className="border-border rounded-md border bg-muted/30 p-2"
+                >
+                  <p className="text-muted-foreground text-[0.65rem]">
+                    {c.highlight_id ? "On highlight" : "Article"} ·{" "}
+                    {new Date(c.created_at).toLocaleString()}
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-foreground">
+                    {c.body}
+                  </p>
+                  {c.ai ? (
+                    <div className="mt-2 rounded-md bg-background/80 p-2">
+                      <p className="text-muted-foreground text-[0.65rem] font-medium">
+                        AI
+                      </p>
+                      <p className="mt-0.5 whitespace-pre-wrap">{c.ai.body}</p>
+                    </div>
+                  ) : null}
+                </li>
+              ))}
             </ul>
           ) : null}
         </Card>

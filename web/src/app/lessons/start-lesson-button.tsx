@@ -5,23 +5,24 @@ import { useState } from "react";
 
 import { ensureLearnerProgressAction } from "@/app/lessons/actions";
 import { Button } from "@/components/ui/button";
-import { useMockUserFromStorage } from "@/lib/use-mock-user-from-storage";
+import { useAuthUser } from "@/lib/use-auth-user";
 
 export default function StartLessonButton({ versionId }: { versionId: string }) {
   const router = useRouter();
-  const { user, ready } = useMockUserFromStorage();
+  const { user, ready } = useAuthUser();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function onStart() {
-    const uid = user.id.trim();
-    if (!ready || !uid) {
+    if (!ready) {
       return;
     }
     setError(null);
     setPending(true);
     try {
-      await ensureLearnerProgressAction(uid, versionId);
+      if (user) {
+        await ensureLearnerProgressAction(versionId);
+      }
       router.push(`/lessons/${versionId}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -34,7 +35,7 @@ export default function StartLessonButton({ versionId }: { versionId: string }) 
     <div className="flex flex-col gap-2">
       <Button
         type="button"
-        disabled={!ready || pending || !user.id.trim()}
+        disabled={!ready || pending}
         onClick={onStart}
       >
         {pending ? "Starting…" : "Start lesson"}

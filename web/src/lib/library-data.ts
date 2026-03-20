@@ -1,4 +1,4 @@
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAnonServerClient } from "@/lib/supabase/server";
 
 export type DomainRow = {
   id: string;
@@ -52,7 +52,7 @@ export type ContentItemDetails = {
 };
 
 export async function listDomains(): Promise<DomainRow[]> {
-  const supabase = getSupabaseServerClient();
+  const supabase = createSupabaseAnonServerClient();
   const { data, error } = await supabase
     .from("domain")
     .select("id,name,slug,sort_order")
@@ -67,7 +67,7 @@ export async function listDomains(): Promise<DomainRow[]> {
 export async function listCategoriesByDomain(
   domainId: string,
 ): Promise<CategoryRow[]> {
-  const supabase = getSupabaseServerClient();
+  const supabase = createSupabaseAnonServerClient();
   const { data, error } = await supabase
     .from("category")
     .select("id,domain_id,name,slug,sort_order")
@@ -83,7 +83,7 @@ export async function listCategoriesByDomain(
 export async function listTopicsByCategory(
   categoryId: string,
 ): Promise<TopicRow[]> {
-  const supabase = getSupabaseServerClient();
+  const supabase = createSupabaseAnonServerClient();
   const { data, error } = await supabase
     .from("topic")
     .select("id,category_id,name,slug,sort_order")
@@ -99,7 +99,7 @@ export async function listTopicsByCategory(
 export async function listContentItemsByTopic(
   topicId: string,
 ): Promise<ContentItemListRow[]> {
-  const supabase = getSupabaseServerClient();
+  const supabase = createSupabaseAnonServerClient();
   const { data, error } = await supabase
     .from("content_item")
     .select("id,title,slug,content_type,sort_order")
@@ -115,7 +115,7 @@ export async function listContentItemsByTopic(
 export async function getContentItemDetails(
   contentItemId: string,
 ): Promise<ContentItemDetails | null> {
-  const supabase = getSupabaseServerClient();
+  const supabase = createSupabaseAnonServerClient();
 
   const { data: item, error: itemError } = await supabase
     .from("content_item")
@@ -215,7 +215,7 @@ export async function listRelatedContentItems(
   topicId: string,
   limit = 3,
 ): Promise<ContentItemListRow[]> {
-  const supabase = getSupabaseServerClient();
+  const supabase = createSupabaseAnonServerClient();
 
   const { data: topic, error: topicError } = await supabase
     .from("topic")

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import MockUserSwitcher from "@/components/mock-user-switcher";
 import { getLessonPlanVersionMeta } from "@/lib/lesson-data";
 
 import LessonPlanExperience from "./lesson-plan-experience";
@@ -22,7 +21,6 @@ export default async function LessonPlanVersionPage({
 
   return (
     <div className="flex flex-col gap-8">
-      <MockUserSwitcher />
       <LessonPlanExperience
         lessonPlanVersionId={lessonPlanVersionId}
         planTitle={meta.title}

@@ -1,5 +1,10 @@
-import { getSupabaseServerClient } from "@/lib/supabase/server";
-import { listRelatedContentItems, type ContentItemListRow } from "@/lib/library-data";
+import { getAuthUser } from "@/lib/auth/server";
+import {
+  listRelatedContentItems,
+  type ContentItemListRow,
+} from "@/lib/library-data";
+import { createSupabaseAnonServerClient } from "@/lib/supabase/server";
+import { createSupabaseUserServerClient } from "@/lib/supabase/server-user";
 
 function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
   if (value == null) {
@@ -29,6 +34,8 @@ export type LessonPlanStepMeta = {
   contentItemId: string;
   contentTitle: string;
   effectiveContentVersionId: string;
+  /** `content_item.current_version_id` — latest published version for this article */
+  contentItemCurrentVersionId: string | null;
   requiresQuiz: boolean;
 };
 
@@ -51,6 +58,7 @@ export type LessonStepState = LessonPlanStepMeta & {
   itemProgressId: string | null;
   articleStatus: string;
   completedAt: string | null;
+  completedContentVersionId: string | null;
 };
 
 export type LearnerLessonViewModel = {
@@ -60,6 +68,11 @@ export type LearnerLessonViewModel = {
   steps: LessonStepState[];
   /** Index of first step whose article is not completed; `steps.length` when all done */
   activeStepIndex: number;
+  /**
+   * True when at least one completed step was finished on an older content version than
+   * the article’s current version (learn-006 regenerate entry point).
+   */
+  canRegenerateLessonPlan: boolean;
 };
 
 export type QuizChoice = { id: string; label: string };
@@ -91,7 +104,7 @@ function parseQuizChoices(raw: unknown): QuizChoice[] {
 }
 
 export async function listLessonPlansForLessonsPage(): Promise<LessonPlanSummary[]> {
-  const supabase = getSupabaseServerClient();
+  const supabase = createSupabaseAnonServerClient();
 
   const { data, error } = await supabase
     .from("lesson_plan_version")
@@ -174,7 +187,7 @@ export async function listLessonPlansForLessonsPage(): Promise<LessonPlanSummary
 export async function getLessonPlanVersionMeta(
   lessonPlanVersionId: string,
 ): Promise<LessonPlanVersionMeta | null> {
-  const supabase = getSupabaseServerClient();
+  const supabase = createSupabaseAnonServerClient();
 
   const { data: lpv, error: lpvError } = await supabase
     .from("lesson_plan_version")
@@ -223,7 +236,7 @@ export async function getLessonPlanVersionMeta(
 export async function getLessonPlanSteps(
   lessonPlanVersionId: string,
 ): Promise<LessonPlanStepMeta[] | null> {
-  const supabase = getSupabaseServerClient();
+  const supabase = createSupabaseAnonServerClient();
 
   const { data: lpv, error: lpvError } = await supabase
     .from("lesson_plan_version")
@@ -247,7 +260,7 @@ export async function getLessonPlanSteps(
       content_item_id,
       effective_content_version_id,
       requires_quiz,
-      content_item ( title )
+      content_item ( title, current_version_id )
     `,
     )
     .eq("lesson_plan_version_id", lessonPlanVersionId)
@@ -271,12 +284,20 @@ export async function getLessonPlanSteps(
     return typeof row?.title === "string" ? row.title : "Article";
   }
 
+  function contentCurrentVersionFromEmbed(raw: unknown): string | null {
+    const row = unwrapOne(raw) as { current_version_id?: string | null } | null;
+    return typeof row?.current_version_id === "string"
+      ? row.current_version_id
+      : null;
+  }
+
   return ((rows as RawItem[] | null) ?? []).map((row) => ({
     lessonPlanItemId: row.id,
     sequence: row.sequence,
     contentItemId: row.content_item_id,
     contentTitle: contentTitleFromEmbed(row.content_item),
     effectiveContentVersionId: row.effective_content_version_id,
+    contentItemCurrentVersionId: contentCurrentVersionFromEmbed(row.content_item),
     requiresQuiz: row.requires_quiz,
   }));
 }
@@ -291,7 +312,7 @@ export type QuizQuestionScoreRow = {
 export async function listQuizQuestionsPublicForLessonPlanItem(
   lessonPlanItemId: string,
 ): Promise<QuizQuestionPublic[]> {
-  const supabase = getSupabaseServerClient();
+  const supabase = await createSupabaseUserServerClient();
 
   const { data: rows, error } = await supabase
     .from("quiz_question")
@@ -323,7 +344,7 @@ export async function listQuizQuestionsPublicForLessonPlanItem(
 export async function loadQuizQuestionsForScoring(
   lessonPlanItemId: string,
 ): Promise<QuizQuestionScoreRow[]> {
-  const supabase = getSupabaseServerClient();
+  const supabase = await createSupabaseUserServerClient();
 
   const { data: rows, error } = await supabase
     .from("quiz_question")
@@ -352,7 +373,7 @@ export async function getArticleSnapshotByVersionId(
   contentItemId: string,
   effectiveVersionId: string,
 ): Promise<ArticleSnapshotRead | null> {
-  const supabase = getSupabaseServerClient();
+  const supabase = createSupabaseAnonServerClient();
 
   const [{ data: item, error: itemError }, { data: version, error: versionError }] =
     await Promise.all([
@@ -409,8 +430,89 @@ export async function getArticleSnapshotByVersionId(
   };
 }
 
+async function resolveAddendumMarkdown(
+  contentItemId: string,
+  currentVersionId: string | null,
+): Promise<string | null> {
+  const supabase = createSupabaseAnonServerClient();
+  if (currentVersionId) {
+    const { data: cv, error } = await supabase
+      .from("content_version")
+      .select("addendum_markdown")
+      .eq("id", currentVersionId)
+      .maybeSingle();
+    if (error) {
+      throw new Error(error.message);
+    }
+    const m = cv?.addendum_markdown;
+    if (typeof m === "string" && m.trim() !== "") {
+      return m;
+    }
+  }
+  const { data: rows, error: e2 } = await supabase
+    .from("content_version")
+    .select("addendum_markdown")
+    .eq("content_item_id", contentItemId)
+    .not("addendum_markdown", "is", null)
+    .order("version_number", { ascending: false })
+    .limit(1);
+  if (e2) {
+    throw new Error(e2.message);
+  }
+  const fallback = rows?.[0]?.addendum_markdown;
+  return typeof fallback === "string" && fallback.trim() !== "" ? fallback : null;
+}
+
+export type ArticleReadBundleForLesson = {
+  snapshot: ArticleSnapshotRead;
+  related: ContentItemListRow[];
+  /** Shown above the reader when the learner completed an older version */
+  addendumMarkdown: string | null;
+};
+
+export async function buildArticleReadBundleForLessonStep(input: {
+  contentItemId: string;
+  articleStatus: string;
+  completedContentVersionId: string | null;
+  effectiveContentVersionId: string;
+  contentItemCurrentVersionId: string | null;
+}): Promise<ArticleReadBundleForLesson | null> {
+  const latestId =
+    input.contentItemCurrentVersionId ?? input.effectiveContentVersionId;
+  const bodyVersionId =
+    input.articleStatus === "completed"
+      ? (input.completedContentVersionId ?? input.effectiveContentVersionId)
+      : latestId;
+
+  const snapshot = await getArticleSnapshotByVersionId(
+    input.contentItemId,
+    bodyVersionId,
+  );
+  if (!snapshot) {
+    return null;
+  }
+
+  const showAddendum =
+    input.articleStatus === "completed" &&
+    !!input.contentItemCurrentVersionId &&
+    bodyVersionId !== input.contentItemCurrentVersionId;
+
+  const addendumMarkdown = showAddendum
+    ? await resolveAddendumMarkdown(
+        input.contentItemId,
+        input.contentItemCurrentVersionId,
+      )
+    : null;
+
+  const related = await listRelatedForLessonArticle(
+    snapshot.contentItemId,
+    snapshot.topicId,
+  );
+
+  return { snapshot, related, addendumMarkdown };
+}
+
 export async function loadLearnerLessonViewModel(
-  userId: string,
   lessonPlanVersionId: string,
 ): Promise<LearnerLessonViewModel> {
   const stepsMeta = await getLessonPlanSteps(lessonPlanVersionId);
@@ -421,10 +523,31 @@ export async function loadLearnerLessonViewModel(
       learnerCompletedAt: null,
       steps: [],
       activeStepIndex: 0,
+      canRegenerateLessonPlan: false,
     };
   }
 
-  const supabase = getSupabaseServerClient();
+  const auth = await getAuthUser();
+  if (!auth) {
+    const steps: LessonStepState[] = stepsMeta.map((s) => ({
+      ...s,
+      itemProgressId: null,
+      articleStatus: "pending",
+      completedAt: null,
+      completedContentVersionId: null,
+    }));
+    return {
+      learnerProgressId: null,
+      learnerStatus: null,
+      learnerCompletedAt: null,
+      steps,
+      activeStepIndex: 0,
+      canRegenerateLessonPlan: false,
+    };
+  }
+
+  const { userId } = auth;
+  const supabase = await createSupabaseUserServerClient();
 
   const { data: progress, error: progressError } = await supabase
     .from("learner_progress")
@@ -445,6 +568,7 @@ export async function loadLearnerLessonViewModel(
       itemProgressId: null,
       articleStatus: "pending",
       completedAt: null,
+      completedContentVersionId: null,
     }));
     return {
       learnerProgressId: null,
@@ -452,13 +576,14 @@ export async function loadLearnerLessonViewModel(
       learnerCompletedAt: null,
       steps,
       activeStepIndex: 0,
+      canRegenerateLessonPlan: false,
     };
   }
 
   const { data: itemRows, error: itemErr } = await supabase
     .from("lesson_item_progress")
     .select(
-      "id, lesson_plan_item_id, article_status, completed_at",
+      "id, lesson_plan_item_id, article_status, completed_at, completed_content_version_id",
     )
     .eq("learner_progress_id", progress.id);
 
@@ -473,6 +598,8 @@ export async function loadLearnerLessonViewModel(
         id: r.id as string,
         articleStatus: r.article_status as string,
         completedAt: r.completed_at as string | null,
+        completedContentVersionId:
+          (r.completed_content_version_id as string | null) ?? null,
       },
     ]),
   );
@@ -484,6 +611,7 @@ export async function loadLearnerLessonViewModel(
       itemProgressId: lip?.id ?? null,
       articleStatus: lip?.articleStatus ?? "pending",
       completedAt: lip?.completedAt ?? null,
+      completedContentVersionId: lip?.completedContentVersionId ?? null,
     };
   });
 
@@ -492,12 +620,21 @@ export async function loadLearnerLessonViewModel(
     activeStepIndex = steps.length;
   }
 
+  const canRegenerateLessonPlan = steps.some(
+    (st) =>
+      st.articleStatus === "completed" &&
+      !!st.completedContentVersionId &&
+      !!st.contentItemCurrentVersionId &&
+      st.completedContentVersionId !== st.contentItemCurrentVersionId,
+  );
+
   return {
     learnerProgressId: progress.id,
     learnerStatus: progress.status,
     learnerCompletedAt: progress.completed_at,
     steps,
     activeStepIndex,
+    canRegenerateLessonPlan,
   };
 }
 

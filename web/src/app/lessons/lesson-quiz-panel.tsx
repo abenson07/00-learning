@@ -22,7 +22,6 @@ type QuizSession = {
 };
 
 type Props = {
-  userId: string;
   lessonPlanVersionId: string;
   lessonPlanItemId: string;
   requiresQuiz: boolean;
@@ -31,7 +30,6 @@ type Props = {
 };
 
 export default function LessonQuizPanel({
-  userId,
   lessonPlanVersionId,
   lessonPlanItemId,
   requiresQuiz,
@@ -49,7 +47,7 @@ export default function LessonQuizPanel({
   const [actionError, setActionError] = useState<string | null>(null);
 
   const refreshSession = useCallback(async () => {
-    if (!userId.trim() || !requiresQuiz || articleCompleted) {
+    if (!requiresQuiz || articleCompleted) {
       setSession(null);
       return;
     }
@@ -57,7 +55,6 @@ export default function LessonQuizPanel({
     setLoading(true);
     try {
       const next = await loadQuizSessionAction(
-        userId.trim(),
         lessonPlanVersionId,
         lessonPlanItemId,
       );
@@ -70,13 +67,7 @@ export default function LessonQuizPanel({
     } finally {
       setLoading(false);
     }
-  }, [
-    userId,
-    lessonPlanVersionId,
-    lessonPlanItemId,
-    requiresQuiz,
-    articleCompleted,
-  ]);
+  }, [lessonPlanVersionId, lessonPlanItemId, requiresQuiz, articleCompleted]);
 
   useEffect(() => {
     void refreshSession();
@@ -87,7 +78,6 @@ export default function LessonQuizPanel({
     setPendingStart(true);
     try {
       const { attemptId: id } = await startQuizAttemptAction(
-        userId.trim(),
         lessonPlanVersionId,
         lessonPlanItemId,
       );
@@ -113,7 +103,6 @@ export default function LessonQuizPanel({
     setPendingSubmit(true);
     try {
       const next = await submitQuizAttemptAction(
-        userId.trim(),
         lessonPlanVersionId,
         lessonPlanItemId,
         attemptId,
@@ -201,7 +190,7 @@ export default function LessonQuizPanel({
               <Button
                 type="button"
                 onClick={onStartQuiz}
-                disabled={pendingStart || !userId.trim()}
+                disabled={pendingStart}
               >
                 {pendingStart ? "Starting…" : "Start quiz"}
               </Button>

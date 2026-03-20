@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import ArticleReader from "@/components/article-reader";
-import MockUserSwitcher from "@/components/mock-user-switcher";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -37,7 +36,6 @@ export default async function ArticlePage({
 
   return (
     <div className="flex flex-col gap-8">
-      <MockUserSwitcher />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex flex-col gap-2">
           <nav className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
@@ -70,6 +68,7 @@ export default async function ArticlePage({
         <ArticleReader
           contentItemId={article.id}
           contentVersionId={article.version.id}
+          articleTitle={article.title}
           canonicalPlainText={article.plain_text}
           contentRichJson={article.content_rich_json}
           topicName={article.breadcrumb.topic.name}

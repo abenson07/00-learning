@@ -100,6 +100,10 @@ Now the agent will be able to show:
    - Complete a step (quiz pass) for an article that has content v2 with addendum
    - Verify the reader shows the version the user completed (v1) AND shows the addendum banner text
    - Navigate away and reload: behavior must persist after refresh
+
+   **Note (seed timing):** Completion records the **article version the learner actually read** (`content_item.current_version_id` at pass time). With the bundled seed, a first-time learner on step 1 reads **v2** and stores **v2**, so no addendum appears until a **newer** version exists. To QA the v1 + addendum UI against the seeded Postgres article, point `completed_content_version_id` at v1 for that step, e.g.  
+   `update lesson_item_progress set completed_content_version_id = 'b7777777-7777-4777-8777-777777777701' where lesson_plan_item_id = 'b8888888-8888-4888-8888-888888888801';`  
+   (after you have a progress row), then reload the lesson.
 3. Regeneration test:
    - Click “Regenerate lesson plan with latest updates”
    - Verify:

@@ -70,10 +70,14 @@ create table public.content_version (
   plain_text text not null,
   published_at timestamptz not null default now(),
   addendum_markdown text,
+  supersedes_version_id uuid references public.content_version (id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (content_item_id, version_number)
 );
+
+create index content_version_supersedes_version_id_idx
+  on public.content_version (supersedes_version_id);
 
 alter table public.content_item
   add constraint content_item_current_version_fk
@@ -263,16 +267,28 @@ insert into public.content_item (id, topic_id, content_type, title, slug, sort_o
   ('b4444444-4444-4444-8444-444444444402', 'b3333333-3333-4333-8333-333333333302', 'article', 'JavaScript basics for agent tooling', 'js-basics-agents', 1, null),
   ('b4444444-4444-4444-8444-444444444403', 'b3333333-3333-4333-8333-333333333302', 'article', 'Build a product: agents + persistence', 'build-a-product-bridge', 2, null);
 
-insert into public.content_version (id, content_item_id, version_number, is_latest, content_rich_json, plain_text, published_at, addendum_markdown) values
+insert into public.content_version (id, content_item_id, version_number, is_latest, content_rich_json, plain_text, published_at, addendum_markdown, supersedes_version_id) values
   (
     'b7777777-7777-4777-8777-777777777701',
     'b4444444-4444-4444-8444-444444444401',
     1,
-    true,
+    false,
     '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Postgres is a relational database. This lesson covers rows, tables, and basic SQL."}]}]}'::jsonb,
     'Postgres is a relational database. This lesson covers rows, tables, and basic SQL.',
     now(),
+    null,
     null
+  ),
+  (
+    'b7777777-7777-4777-8777-777777777711',
+    'b4444444-4444-4444-8444-444444444401',
+    2,
+    true,
+    '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Postgres is a relational database. This lesson covers rows, tables, basic SQL, and why ACID transactions matter for real apps."}]}]}'::jsonb,
+    'Postgres is a relational database. This lesson covers rows, tables, basic SQL, and why ACID transactions matter for real apps.',
+    now(),
+    '**Update:** We added coverage of **ACID transactions** (atomicity, consistency, isolation, durability). If you completed this article before this change, read this addendum and use “Regenerate lesson plan” when you want the full latest article body and fresh quizzes.',
+    'b7777777-7777-4777-8777-777777777701'
   ),
   (
     'b7777777-7777-4777-8777-777777777702',
@@ -282,6 +298,7 @@ insert into public.content_version (id, content_item_id, version_number, is_late
     '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"JavaScript runs in the browser and on the server. Variables, functions, and async patterns matter for agent tooling."}]}]}'::jsonb,
     'JavaScript runs in the browser and on the server. Variables, functions, and async patterns matter for agent tooling.',
     now(),
+    null,
     null
   ),
   (
@@ -292,10 +309,11 @@ insert into public.content_version (id, content_item_id, version_number, is_late
     '{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Building a product means connecting UI, APIs, and persistence. You will apply both agent workflows and database design."}]}]}'::jsonb,
     'Building a product means connecting UI, APIs, and persistence. You will apply both agent workflows and database design.',
     now(),
+    null,
     null
   );
 
-update public.content_item set current_version_id = 'b7777777-7777-4777-8777-777777777701' where id = 'b4444444-4444-4444-8444-444444444401';
+update public.content_item set current_version_id = 'b7777777-7777-4777-8777-777777777711' where id = 'b4444444-4444-4444-8444-444444444401';
 update public.content_item set current_version_id = 'b7777777-7777-4777-8777-777777777702' where id = 'b4444444-4444-4444-8444-444444444402';
 update public.content_item set current_version_id = 'b7777777-7777-4777-8777-777777777703' where id = 'b4444444-4444-4444-8444-444444444403';
 

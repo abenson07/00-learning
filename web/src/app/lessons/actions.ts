@@ -1,34 +1,41 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { getAuthUser } from "@/lib/auth/server";
 import {
-  getArticleSnapshotByVersionId,
+  buildArticleReadBundleForLessonStep,
   getLessonPlanSteps,
   listQuizQuestionsPublicForLessonPlanItem,
-  listRelatedForLessonArticle,
   loadLearnerLessonViewModel,
   loadQuizQuestionsForScoring,
-  type ArticleSnapshotRead,
+  type ArticleReadBundleForLesson,
   type LearnerLessonViewModel,
   type LessonStepState,
   type QuizQuestionPublic,
 } from "@/lib/lesson-data";
-import type { ContentItemListRow } from "@/lib/library-data";
-import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { getSupabaseServiceRoleClient } from "@/lib/supabase/server";
+import { createSupabaseUserServerClient } from "@/lib/supabase/server-user";
 
 const QUIZ_PASS_RATIO = 0.7;
 
+function parseContentItemCurrentVersionEmbed(raw: unknown): string | null {
+  const embed = Array.isArray(raw) ? raw[0] : raw;
+  if (
+    embed &&
+    typeof embed === "object" &&
+    typeof (embed as { current_version_id?: string }).current_version_id ===
+      "string"
+  ) {
+    return (embed as { current_version_id: string }).current_version_id;
+  }
+  return null;
+}
+
 async function syncLearnerProgressCompletedIfAllStepsDone(
-  supabase: SupabaseClient,
-  userId: string,
   lessonPlanVersionId: string,
 ): Promise<void> {
-  const refreshed = await loadLearnerLessonViewModel(
-    userId,
-    lessonPlanVersionId,
-  );
+  const refreshed = await loadLearnerLessonViewModel(lessonPlanVersionId);
   if (!refreshed.learnerProgressId) {
     return;
   }
@@ -38,6 +45,7 @@ async function syncLearnerProgressCompletedIfAllStepsDone(
   if (!allDone) {
     return;
   }
+  const supabase = await createSupabaseUserServerClient();
   const { error } = await supabase
     .from("learner_progress")
     .update({
@@ -51,11 +59,10 @@ async function syncLearnerProgressCompletedIfAllStepsDone(
 }
 
 async function assertActiveStepContext(
-  userId: string,
   lessonPlanVersionId: string,
   lessonPlanItemId: string,
 ): Promise<{ vm: LearnerLessonViewModel; step: LessonStepState }> {
-  const vm = await loadLearnerLessonViewModel(userId, lessonPlanVersionId);
+  const vm = await loadLearnerLessonViewModel(lessonPlanVersionId);
   if (!vm.learnerProgressId) {
     throw new Error("Start the lesson before updating this step.");
   }
@@ -76,17 +83,20 @@ async function assertActiveStepContext(
 }
 
 export async function loadLearnerLessonViewAction(
-  userId: string,
   lessonPlanVersionId: string,
 ): Promise<LearnerLessonViewModel> {
-  return loadLearnerLessonViewModel(userId, lessonPlanVersionId);
+  return loadLearnerLessonViewModel(lessonPlanVersionId);
 }
 
 export async function ensureLearnerProgressAction(
-  userId: string,
   lessonPlanVersionId: string,
 ): Promise<LearnerLessonViewModel> {
-  const supabase = getSupabaseServerClient();
+  const auth = await getAuthUser();
+  if (!auth) {
+    return loadLearnerLessonViewModel(lessonPlanVersionId);
+  }
+  const { userId } = auth;
+  const supabase = await createSupabaseUserServerClient();
 
   const { data: existing, error: findError } = await supabase
     .from("learner_progress")
@@ -103,7 +113,7 @@ export async function ensureLearnerProgressAction(
 
   if (existing) {
     revalidatePath(`/lessons/${lessonPlanVersionId}`);
-    return loadLearnerLessonViewModel(userId, lessonPlanVersionId);
+    return loadLearnerLessonViewModel(lessonPlanVersionId);
   }
 
   const { data: inserted, error: insErr } = await supabase
@@ -136,17 +146,15 @@ export async function ensureLearnerProgressAction(
   }
 
   revalidatePath(`/lessons/${lessonPlanVersionId}`);
-  return loadLearnerLessonViewModel(userId, lessonPlanVersionId);
+  return loadLearnerLessonViewModel(lessonPlanVersionId);
 }
 
 export async function markArticleCompletedAction(
-  userId: string,
   lessonPlanVersionId: string,
   lessonPlanItemId: string,
 ): Promise<LearnerLessonViewModel> {
-  const supabase = getSupabaseServerClient();
+  const supabase = await createSupabaseUserServerClient();
   const { vm, step } = await assertActiveStepContext(
-    userId,
     lessonPlanVersionId,
     lessonPlanItemId,
   );
@@ -161,7 +169,9 @@ export async function markArticleCompletedAction(
 
   const { data: itemMeta, error: itemErr } = await supabase
     .from("lesson_plan_item")
-    .select("id, lesson_plan_version_id, effective_content_version_id")
+    .select(
+      "id, lesson_plan_version_id, effective_content_version_id, content_item ( current_version_id )",
+    )
     .eq("id", lessonPlanItemId)
     .maybeSingle();
 
@@ -175,12 +185,16 @@ export async function markArticleCompletedAction(
     throw new Error("This step does not belong to the current lesson version.");
   }
 
+  const currentVid = parseContentItemCurrentVersionEmbed(itemMeta.content_item);
+  const completedVersionId =
+    currentVid ?? itemMeta.effective_content_version_id;
+
   const { error: updErr } = await supabase
     .from("lesson_item_progress")
     .update({
       article_status: "completed",
       completed_at: new Date().toISOString(),
-      completed_content_version_id: itemMeta.effective_content_version_id,
+      completed_content_version_id: completedVersionId,
     })
     .eq("learner_progress_id", vm.learnerProgressId)
     .eq("lesson_plan_item_id", lessonPlanItemId);
@@ -189,14 +203,10 @@ export async function markArticleCompletedAction(
     throw new Error(updErr.message);
   }
 
-  await syncLearnerProgressCompletedIfAllStepsDone(
-    supabase,
-    userId,
-    lessonPlanVersionId,
-  );
+  await syncLearnerProgressCompletedIfAllStepsDone(lessonPlanVersionId);
 
   revalidatePath(`/lessons/${lessonPlanVersionId}`);
-  return loadLearnerLessonViewModel(userId, lessonPlanVersionId);
+  return loadLearnerLessonViewModel(lessonPlanVersionId);
 }
 
 export type QuizSessionPayload = {
@@ -211,12 +221,10 @@ export type QuizSessionPayload = {
 };
 
 export async function loadQuizSessionAction(
-  userId: string,
   lessonPlanVersionId: string,
   lessonPlanItemId: string,
 ): Promise<QuizSessionPayload> {
   const { step } = await assertActiveStepContext(
-    userId,
     lessonPlanVersionId,
     lessonPlanItemId,
   );
@@ -229,7 +237,7 @@ export async function loadQuizSessionAction(
     throw new Error("Missing progress row for this step.");
   }
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await createSupabaseUserServerClient();
 
   const { data: inProg, error: e1 } = await supabase
     .from("quiz_attempt")
@@ -271,12 +279,10 @@ export async function loadQuizSessionAction(
 }
 
 export async function startQuizAttemptAction(
-  userId: string,
   lessonPlanVersionId: string,
   lessonPlanItemId: string,
 ): Promise<{ attemptId: string }> {
   const { step } = await assertActiveStepContext(
-    userId,
     lessonPlanVersionId,
     lessonPlanItemId,
   );
@@ -294,7 +300,7 @@ export async function startQuizAttemptAction(
     throw new Error("Missing progress row for this step.");
   }
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await createSupabaseUserServerClient();
 
   const { data: existing, error: e1 } = await supabase
     .from("quiz_attempt")
@@ -332,14 +338,12 @@ export async function startQuizAttemptAction(
 }
 
 export async function submitQuizAttemptAction(
-  userId: string,
   lessonPlanVersionId: string,
   lessonPlanItemId: string,
   attemptId: string,
   answers: Record<string, string>,
 ): Promise<LearnerLessonViewModel> {
   const { step } = await assertActiveStepContext(
-    userId,
     lessonPlanVersionId,
     lessonPlanItemId,
   );
@@ -357,7 +361,7 @@ export async function submitQuizAttemptAction(
     throw new Error("Missing progress row for this step.");
   }
 
-  const supabase = getSupabaseServerClient();
+  const supabase = await createSupabaseUserServerClient();
 
   const { data: attempt, error: attErr } = await supabase
     .from("quiz_attempt")
@@ -413,12 +417,14 @@ export async function submitQuizAttemptAction(
 
   if (!passed) {
     revalidatePath(`/lessons/${lessonPlanVersionId}`);
-    return loadLearnerLessonViewModel(userId, lessonPlanVersionId);
+    return loadLearnerLessonViewModel(lessonPlanVersionId);
   }
 
   const { data: itemMeta, error: itemErr } = await supabase
     .from("lesson_plan_item")
-    .select("effective_content_version_id")
+    .select(
+      "effective_content_version_id, content_item ( current_version_id )",
+    )
     .eq("id", lessonPlanItemId)
     .maybeSingle();
 
@@ -429,12 +435,16 @@ export async function submitQuizAttemptAction(
     throw new Error("Missing lesson item.");
   }
 
+  const currentVid = parseContentItemCurrentVersionEmbed(itemMeta.content_item);
+  const completedVersionId =
+    currentVid ?? itemMeta.effective_content_version_id;
+
   const { error: lipUp } = await supabase
     .from("lesson_item_progress")
     .update({
       article_status: "completed",
       completed_at: new Date().toISOString(),
-      completed_content_version_id: itemMeta.effective_content_version_id,
+      completed_content_version_id: completedVersionId,
     })
     .eq("id", lipId);
 
@@ -442,35 +452,265 @@ export async function submitQuizAttemptAction(
     throw new Error(lipUp.message);
   }
 
-  await syncLearnerProgressCompletedIfAllStepsDone(
-    supabase,
-    userId,
-    lessonPlanVersionId,
-  );
+  await syncLearnerProgressCompletedIfAllStepsDone(lessonPlanVersionId);
 
   revalidatePath(`/lessons/${lessonPlanVersionId}`);
-  return loadLearnerLessonViewModel(userId, lessonPlanVersionId);
+  return loadLearnerLessonViewModel(lessonPlanVersionId);
 }
 
-export type ArticleReadBundle = {
-  snapshot: ArticleSnapshotRead;
-  related: ContentItemListRow[];
-};
+export type ArticleReadBundle = ArticleReadBundleForLesson;
 
+export async function getArticleReadBundleForLessonStepAction(input: {
+  contentItemId: string;
+  articleStatus: string;
+  completedContentVersionId: string | null;
+  effectiveContentVersionId: string;
+  contentItemCurrentVersionId: string | null;
+}): Promise<ArticleReadBundleForLesson | null> {
+  return buildArticleReadBundleForLessonStep(input);
+}
+
+/** @deprecated Prefer getArticleReadBundleForLessonStepAction (learn-006 versioning). */
 export async function getArticleReadBundleAction(
   contentItemId: string,
   effectiveVersionId: string,
-): Promise<ArticleReadBundle | null> {
-  const snapshot = await getArticleSnapshotByVersionId(
+): Promise<ArticleReadBundleForLesson | null> {
+  return buildArticleReadBundleForLessonStep({
     contentItemId,
-    effectiveVersionId,
-  );
-  if (!snapshot) {
-    return null;
+    articleStatus: "pending",
+    completedContentVersionId: null,
+    effectiveContentVersionId: effectiveVersionId,
+    contentItemCurrentVersionId: null,
+  });
+}
+
+export async function regenerateLessonPlanWithLatestAction(
+  lessonPlanVersionId: string,
+): Promise<{ newLessonPlanVersionId: string }> {
+  const admin = getSupabaseServiceRoleClient();
+
+  const vm = await loadLearnerLessonViewModel(lessonPlanVersionId);
+  if (!vm.learnerProgressId) {
+    throw new Error("Start the lesson before regenerating.");
   }
-  const related = await listRelatedForLessonArticle(
-    snapshot.contentItemId,
-    snapshot.topicId,
-  );
-  return { snapshot, related };
+  if (!vm.canRegenerateLessonPlan) {
+    throw new Error(
+      "No completed step has a newer content version to fold into the plan.",
+    );
+  }
+
+  const { data: lpv, error: lpvErr } = await admin
+    .from("lesson_plan_version")
+    .select("id, lesson_plan_id, version_number")
+    .eq("id", lessonPlanVersionId)
+    .maybeSingle();
+
+  if (lpvErr) {
+    throw new Error(lpvErr.message);
+  }
+  if (!lpv) {
+    throw new Error("Lesson plan version not found.");
+  }
+
+  const { data: oldItems, error: itemsErr } = await admin
+    .from("lesson_plan_item")
+    .select(
+      `
+      id,
+      sequence,
+      content_item_id,
+      effective_content_version_id,
+      requires_quiz,
+      content_item ( current_version_id )
+    `,
+    )
+    .eq("lesson_plan_version_id", lessonPlanVersionId)
+    .order("sequence", { ascending: true });
+
+  if (itemsErr) {
+    throw new Error(itemsErr.message);
+  }
+  const items = oldItems ?? [];
+  if (items.length === 0) {
+    throw new Error("This lesson version has no items.");
+  }
+
+  const newEffectives = items.map((row) => {
+    const cur = parseContentItemCurrentVersionEmbed(
+      (row as { content_item?: unknown }).content_item,
+    );
+    if (!cur) {
+      throw new Error("Missing current_version_id for a content item.");
+    }
+    return cur;
+  });
+
+  const nextVersionNumber = lpv.version_number + 1;
+
+  const { data: newLpv, error: insLpvErr } = await admin
+    .from("lesson_plan_version")
+    .insert({
+      lesson_plan_id: lpv.lesson_plan_id,
+      version_number: nextVersionNumber,
+      source_timestamp: new Date().toISOString(),
+      is_active: true,
+    })
+    .select("id")
+    .single();
+
+  if (insLpvErr) {
+    throw new Error(insLpvErr.message);
+  }
+
+  const { error: deactivateErr } = await admin
+    .from("lesson_plan_version")
+    .update({ is_active: false })
+    .eq("lesson_plan_id", lpv.lesson_plan_id)
+    .neq("id", newLpv.id);
+
+  if (deactivateErr) {
+    throw new Error(deactivateErr.message);
+  }
+
+  type OldItemRow = {
+    id: string;
+    sequence: number;
+    content_item_id: string;
+    effective_content_version_id: string;
+    requires_quiz: boolean;
+  };
+
+  const typedOld = items as OldItemRow[];
+
+  const insertPayload = typedOld.map((row, i) => ({
+    lesson_plan_version_id: newLpv.id,
+    sequence: row.sequence,
+    content_item_id: row.content_item_id,
+    effective_content_version_id: newEffectives[i]!,
+    requires_quiz: row.requires_quiz,
+  }));
+
+  const { data: newItemRows, error: insItemsErr } = await admin
+    .from("lesson_plan_item")
+    .insert(insertPayload)
+    .select("id, sequence")
+    .order("sequence", { ascending: true });
+
+  if (insItemsErr) {
+    throw new Error(insItemsErr.message);
+  }
+  const newIds = (newItemRows ?? []).map((r) => r.id);
+
+  if (newIds.length !== typedOld.length) {
+    throw new Error("Failed to create new lesson items.");
+  }
+
+  for (let i = 0; i < typedOld.length; i++) {
+    const oldId = typedOld[i]!.id;
+    const newId = newIds[i]!;
+    const { data: qs, error: qErr } = await admin
+      .from("quiz_question")
+      .select("question_index, question_text, choices, correct_choice_id, max_points")
+      .eq("lesson_plan_item_id", oldId);
+
+    if (qErr) {
+      throw new Error(qErr.message);
+    }
+    if (qs && qs.length > 0) {
+      const { error: iqErr } = await admin.from("quiz_question").insert(
+        qs.map((q) => ({
+          lesson_plan_item_id: newId,
+          question_index: q.question_index,
+          question_text: q.question_text,
+          choices: q.choices,
+          correct_choice_id: q.correct_choice_id,
+          max_points: q.max_points,
+        })),
+      );
+      if (iqErr) {
+        throw new Error(iqErr.message);
+      }
+    }
+  }
+
+  const { data: lipRows, error: lipQErr } = await admin
+    .from("lesson_item_progress")
+    .select("id, lesson_plan_item_id")
+    .eq("learner_progress_id", vm.learnerProgressId);
+
+  if (lipQErr) {
+    throw new Error(lipQErr.message);
+  }
+
+  for (const lip of lipRows ?? []) {
+    const idx = typedOld.findIndex((o) => o.id === lip.lesson_plan_item_id);
+    if (idx < 0) {
+      throw new Error("Progress row references an unknown lesson item.");
+    }
+    const oldEff = typedOld[idx]!.effective_content_version_id;
+    const newEff = newEffectives[idx]!;
+    const newItemId = newIds[idx]!;
+    const versionChanged = oldEff !== newEff;
+
+    if (versionChanged) {
+      const { error: delA } = await admin
+        .from("quiz_attempt")
+        .delete()
+        .eq("lesson_item_progress_id", lip.id);
+      if (delA) {
+        throw new Error(delA.message);
+      }
+      const { error: upL } = await admin
+        .from("lesson_item_progress")
+        .update({
+          lesson_plan_item_id: newItemId,
+          article_status: "pending",
+          completed_at: null,
+          completed_content_version_id: null,
+        })
+        .eq("id", lip.id);
+      if (upL) {
+        throw new Error(upL.message);
+      }
+    } else {
+      const { error: upL } = await admin
+        .from("lesson_item_progress")
+        .update({ lesson_plan_item_id: newItemId })
+        .eq("id", lip.id);
+      if (upL) {
+        throw new Error(upL.message);
+      }
+    }
+  }
+
+  const { error: upProgErr } = await admin
+    .from("learner_progress")
+    .update({ lesson_plan_version_id: newLpv.id })
+    .eq("id", vm.learnerProgressId);
+
+  if (upProgErr) {
+    throw new Error(upProgErr.message);
+  }
+
+  const refreshed = await loadLearnerLessonViewModel(newLpv.id);
+  const allDone =
+    refreshed.steps.length > 0 &&
+    refreshed.steps.every((s) => s.articleStatus === "completed");
+  const { error: stErr } = await admin
+    .from("learner_progress")
+    .update({
+      status: allDone ? "completed" : "active",
+      completed_at: allDone ? new Date().toISOString() : null,
+    })
+    .eq("id", vm.learnerProgressId);
+
+  if (stErr) {
+    throw new Error(stErr.message);
+  }
+
+  revalidatePath("/lessons");
+  revalidatePath(`/lessons/${lessonPlanVersionId}`);
+  revalidatePath(`/lessons/${newLpv.id}`);
+
+  return { newLessonPlanVersionId: newLpv.id };
 }

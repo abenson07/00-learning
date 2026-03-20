@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import MockUserSwitcher from "@/components/mock-user-switcher";
 import { Card } from "@/components/ui/card";
+import { getAuthUser, getUserProfileForUser } from "@/lib/auth/server";
 import { listLessonPlansForLessonsPage } from "@/lib/lesson-data";
 
 import StartLessonButton from "./start-lesson-button";
@@ -9,21 +9,49 @@ import StartLessonButton from "./start-lesson-button";
 export const dynamic = "force-dynamic";
 
 export default async function LessonsPage() {
-  const plans = await listLessonPlansForLessonsPage();
+  const auth = await getAuthUser();
+  const [plans, profile] = await Promise.all([
+    listLessonPlansForLessonsPage(),
+    auth ? getUserProfileForUser(auth.userId) : Promise.resolve(null),
+  ]);
+
+  const profileLine =
+    profile?.occupation || profile?.context
+      ? [profile?.occupation, profile?.context?.slice(0, 100)]
+          .filter(Boolean)
+          .join(" · ")
+      : null;
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-semibold">Lessons</h1>
-        <p className="text-muted-foreground">
-          Mock user ids stand in for real accounts until Supabase Auth is wired
-          up. Starting a lesson creates{" "}
-          <code className="text-foreground">learner_progress</code> and per-step
-          rows in Supabase.
+        <p className="text-muted-foreground text-sm">
+          Browse lesson plans below. You can tune your learning profile in{" "}
+          <Link href="/settings" className="text-primary font-medium hover:underline">
+            Settings
+          </Link>{" "}
+          when available.
         </p>
       </div>
 
-      <MockUserSwitcher />
+      <div className="flex flex-wrap items-center gap-2">
+        {profile?.role === "teacher" ? (
+          <span className="rounded-full bg-violet-500/15 px-3 py-1 text-xs font-medium text-violet-800 dark:text-violet-200">
+            Teacher mode
+          </span>
+        ) : null}
+        {profileLine ? (
+          <span className="text-muted-foreground rounded-full border border-border bg-muted/40 px-3 py-1 text-xs">
+            Profile: {profileLine}
+            {profile?.context && profile.context.length > 100 ? "…" : ""}
+          </span>
+        ) : (
+          <span className="text-muted-foreground text-xs">
+            No occupation set — add one in Settings for better AI examples.
+          </span>
+        )}
+      </div>
 
       <div className="flex flex-col gap-4">
         <h2 className="text-lg font-medium">Available lesson plans</h2>

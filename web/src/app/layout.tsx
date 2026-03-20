@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+
+// import AuthNav from "@/components/auth-nav";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -45,6 +47,7 @@ export default function RootLayout({
               >
                 Lessons
               </Link>
+              {/* <AuthNav /> — hidden while login is disabled */}
             </nav>
           </div>
         </header>
