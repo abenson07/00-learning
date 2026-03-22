@@ -39,7 +39,10 @@ export default async function ArticlePage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex flex-col gap-2">
           <nav className="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-            <Link href={libraryBack} className="hover:text-foreground">
+            <Link
+              href={libraryBack}
+              className="font-medium text-primary hover:text-primary/80"
+            >
               Library
             </Link>
             <span aria-hidden>/</span>
@@ -49,7 +52,7 @@ export default async function ArticlePage({
             <span aria-hidden>/</span>
             <span className="text-foreground">{article.breadcrumb.topic.name}</span>
           </nav>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
             {article.title}
           </h1>
           <p className="text-muted-foreground text-xs">
@@ -64,7 +67,7 @@ export default async function ArticlePage({
         </Link>
       </div>
 
-      <Card className="p-4 sm:p-6">
+      <Card className="p-5 sm:p-8">
         <ArticleReader
           contentItemId={article.id}
           contentVersionId={article.version.id}
@@ -78,7 +81,7 @@ export default async function ArticlePage({
 
       {related.length > 0 ? (
         <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-medium">Related in this track</h2>
+          <h2 className="text-lg font-bold tracking-tight">Related in this track</h2>
           <ul className="flex flex-col gap-2">
             {related.map((item) => (
               <li key={item.id}>

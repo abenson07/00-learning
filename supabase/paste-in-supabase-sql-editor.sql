@@ -11,6 +11,8 @@
 --
 -- Same content as: migrations/20260320120000_initial_schema.sql
 --   + 20260320140000_quiz_question.sql + seed.sql
+-- For lesson_reading / curriculum columns: also run migrations through
+--   20260322100000_lesson_reading_curriculum.sql (this monolithic paste may lag).
 -- =============================================================================
 
 -- --- Schema -----------------------------------------------------------------

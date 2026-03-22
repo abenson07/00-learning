@@ -1,11 +1,19 @@
 "use server";
+/**
+ * Quiz server actions (load/start/submit) remain for a future lesson-level quiz feature.
+ * UI currently uses placeholders; do not wire these to article steps.
+ */
 
 import { revalidatePath } from "next/cache";
 
 import { getAuthUser } from "@/lib/auth/server";
+import { getLearnerDbContext } from "@/lib/learner-db-context";
 import {
   buildArticleReadBundleForLessonStep,
-  getLessonPlanSteps,
+  canRevertReadingCompletion,
+  deriveLessonAggregateFromReadings,
+  findFirstIncompleteReadingGlobal,
+  getLessonPlanLessons,
   listQuizQuestionsPublicForLessonPlanItem,
   loadLearnerLessonViewModel,
   loadQuizQuestionsForScoring,
@@ -45,12 +53,44 @@ async function syncLearnerProgressCompletedIfAllStepsDone(
   if (!allDone) {
     return;
   }
-  const supabase = await createSupabaseUserServerClient();
-  const { error } = await supabase
+  const ctx = await getLearnerDbContext();
+  if (!ctx) {
+    return;
+  }
+  const { error } = await ctx.client
     .from("learner_progress")
     .update({
       status: "completed",
       completed_at: new Date().toISOString(),
+    })
+    .eq("id", refreshed.learnerProgressId);
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+async function syncLearnerProgressReopenIfIncomplete(
+  lessonPlanVersionId: string,
+): Promise<void> {
+  const refreshed = await loadLearnerLessonViewModel(lessonPlanVersionId);
+  if (!refreshed.learnerProgressId) {
+    return;
+  }
+  const allDone =
+    refreshed.steps.length > 0 &&
+    refreshed.steps.every((s) => s.articleStatus === "completed");
+  if (allDone) {
+    return;
+  }
+  const ctx = await getLearnerDbContext();
+  if (!ctx) {
+    return;
+  }
+  const { error } = await ctx.client
+    .from("learner_progress")
+    .update({
+      status: "active",
+      completed_at: null,
     })
     .eq("id", refreshed.learnerProgressId);
   if (error) {
@@ -91,12 +131,19 @@ export async function loadLearnerLessonViewAction(
 export async function ensureLearnerProgressAction(
   lessonPlanVersionId: string,
 ): Promise<LearnerLessonViewModel> {
-  const auth = await getAuthUser();
-  if (!auth) {
+  const ctx = await getLearnerDbContext();
+  if (!ctx) {
+    if (process.env.NODE_ENV === "development") {
+      const auth = await getAuthUser();
+      if (!auth && !process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+        throw new Error(
+          "Local lesson progress without sign-in needs SUPABASE_SERVICE_ROLE_KEY in web/.env.local (dev only).",
+        );
+      }
+    }
     return loadLearnerLessonViewModel(lessonPlanVersionId);
   }
-  const { userId } = auth;
-  const supabase = await createSupabaseUserServerClient();
+  const { userId, client: supabase } = ctx;
 
   const { data: existing, error: findError } = await supabase
     .from("learner_progress")
@@ -130,18 +177,45 @@ export async function ensureLearnerProgressAction(
     throw new Error(insErr.message);
   }
 
-  const steps = await getLessonPlanSteps(lessonPlanVersionId);
-  if (steps && steps.length > 0) {
-    const { error: lipErr } = await supabase.from("lesson_item_progress").insert(
-      steps.map((s) => ({
-        learner_progress_id: inserted.id,
-        lesson_plan_item_id: s.lessonPlanItemId,
-        article_status: "pending",
-      })),
-    );
+  const lessons = await getLessonPlanLessons(lessonPlanVersionId);
+  if (lessons && lessons.length > 0) {
+    const { data: insertedLips, error: lipErr } = await supabase
+      .from("lesson_item_progress")
+      .insert(
+        lessons.map((s) => ({
+          learner_progress_id: inserted.id,
+          lesson_plan_item_id: s.lessonPlanItemId,
+          article_status: "pending",
+        })),
+      )
+      .select("id, lesson_plan_item_id");
 
     if (lipErr) {
       throw new Error(lipErr.message);
+    }
+
+    const lrpRows: {
+      lesson_item_progress_id: string;
+      lesson_reading_id: string;
+      article_status: string;
+    }[] = [];
+    for (const lip of insertedLips ?? []) {
+      const meta = lessons.find((l) => l.lessonPlanItemId === lip.lesson_plan_item_id);
+      for (const rd of meta?.readings ?? []) {
+        lrpRows.push({
+          lesson_item_progress_id: lip.id,
+          lesson_reading_id: rd.lessonReadingId,
+          article_status: "pending",
+        });
+      }
+    }
+    if (lrpRows.length > 0) {
+      const { error: lrpErr } = await supabase
+        .from("lesson_reading_progress")
+        .insert(lrpRows);
+      if (lrpErr) {
+        throw new Error(lrpErr.message);
+      }
     }
   }
 
@@ -149,63 +223,253 @@ export async function ensureLearnerProgressAction(
   return loadLearnerLessonViewModel(lessonPlanVersionId);
 }
 
-export async function markArticleCompletedAction(
+export async function markReadingCompletedAction(
   lessonPlanVersionId: string,
   lessonPlanItemId: string,
+  lessonReadingId: string,
 ): Promise<LearnerLessonViewModel> {
-  const supabase = await createSupabaseUserServerClient();
-  const { vm, step } = await assertActiveStepContext(
-    lessonPlanVersionId,
-    lessonPlanItemId,
-  );
-
-  if (step.requiresQuiz) {
-    throw new Error("Complete the quiz for this step to continue.");
+  const ctx = await getLearnerDbContext();
+  if (!ctx) {
+    if (process.env.NODE_ENV === "development") {
+      throw new Error(
+        "Local lesson progress without sign-in needs SUPABASE_SERVICE_ROLE_KEY in web/.env.local (dev only).",
+      );
+    }
+    throw new Error("Sign in to save progress.");
+  }
+  const supabase = ctx.client;
+  const vm = await loadLearnerLessonViewModel(lessonPlanVersionId);
+  if (!vm.learnerProgressId) {
+    throw new Error("Start the lesson before updating progress.");
   }
 
-  if (step.articleStatus === "completed") {
-    throw new Error("This article is already marked complete.");
+  const next = findFirstIncompleteReadingGlobal(vm.steps);
+  if (
+    !next ||
+    next.lessonPlanItemId !== lessonPlanItemId ||
+    next.lessonReadingId !== lessonReadingId
+  ) {
+    throw new Error(
+      "Finish earlier readings in order before marking this one complete.",
+    );
   }
 
-  const { data: itemMeta, error: itemErr } = await supabase
-    .from("lesson_plan_item")
+  const step = vm.steps.find((s) => s.lessonPlanItemId === lessonPlanItemId);
+  if (!step?.itemProgressId) {
+    throw new Error("Missing progress row for this lesson.");
+  }
+  const reading = step.readings.find((r) => r.lessonReadingId === lessonReadingId);
+  if (!reading?.readingProgressId) {
+    throw new Error("Missing reading progress row.");
+  }
+  if (reading.articleStatus === "completed") {
+    throw new Error("This reading is already marked complete.");
+  }
+
+  const { data: lrMeta, error: lrErr } = await supabase
+    .from("lesson_reading")
     .select(
-      "id, lesson_plan_version_id, effective_content_version_id, content_item ( current_version_id )",
+      `
+      id,
+      effective_content_version_id,
+      content_item ( current_version_id ),
+      lesson_plan_item ( lesson_plan_version_id )
+    `,
     )
-    .eq("id", lessonPlanItemId)
+    .eq("id", lessonReadingId)
     .maybeSingle();
 
-  if (itemErr) {
-    throw new Error(itemErr.message);
+  if (lrErr) {
+    throw new Error(lrErr.message);
   }
-  if (
-    !itemMeta ||
-    itemMeta.lesson_plan_version_id !== lessonPlanVersionId
-  ) {
-    throw new Error("This step does not belong to the current lesson version.");
+  const lpItem = lrMeta
+    ? (Array.isArray((lrMeta as { lesson_plan_item?: unknown }).lesson_plan_item)
+        ? (lrMeta as { lesson_plan_item: unknown[] }).lesson_plan_item[0]
+        : (lrMeta as { lesson_plan_item?: unknown }).lesson_plan_item)
+    : null;
+  const lpvId =
+    lpItem &&
+    typeof lpItem === "object" &&
+    typeof (lpItem as { lesson_plan_version_id?: string }).lesson_plan_version_id ===
+      "string"
+      ? (lpItem as { lesson_plan_version_id: string }).lesson_plan_version_id
+      : null;
+
+  if (!lrMeta || lpvId !== lessonPlanVersionId) {
+    throw new Error("This reading does not belong to the current lesson version.");
   }
 
-  const currentVid = parseContentItemCurrentVersionEmbed(itemMeta.content_item);
+  const currentVid = parseContentItemCurrentVersionEmbed(
+    (lrMeta as { content_item?: unknown }).content_item,
+  );
   const completedVersionId =
-    currentVid ?? itemMeta.effective_content_version_id;
+    currentVid ??
+    (lrMeta as { effective_content_version_id: string })
+      .effective_content_version_id;
 
-  const { error: updErr } = await supabase
-    .from("lesson_item_progress")
+  const { error: urpErr } = await supabase
+    .from("lesson_reading_progress")
     .update({
       article_status: "completed",
       completed_at: new Date().toISOString(),
       completed_content_version_id: completedVersionId,
     })
-    .eq("learner_progress_id", vm.learnerProgressId)
-    .eq("lesson_plan_item_id", lessonPlanItemId);
+    .eq("id", reading.readingProgressId);
 
-  if (updErr) {
-    throw new Error(updErr.message);
+  if (urpErr) {
+    throw new Error(urpErr.message);
+  }
+
+  const allReadingsDone = step.readings.every((r) =>
+    r.lessonReadingId === lessonReadingId ? true : r.articleStatus === "completed",
+  );
+
+  if (allReadingsDone) {
+    const { error: lipErr } = await supabase
+      .from("lesson_item_progress")
+      .update({
+        article_status: "completed",
+        completed_at: new Date().toISOString(),
+        completed_content_version_id: completedVersionId,
+      })
+      .eq("id", step.itemProgressId);
+    if (lipErr) {
+      throw new Error(lipErr.message);
+    }
+  } else {
+    const { error: lipErr } = await supabase
+      .from("lesson_item_progress")
+      .update({ article_status: "in_progress" })
+      .eq("id", step.itemProgressId);
+    if (lipErr) {
+      throw new Error(lipErr.message);
+    }
   }
 
   await syncLearnerProgressCompletedIfAllStepsDone(lessonPlanVersionId);
 
   revalidatePath(`/lessons/${lessonPlanVersionId}`);
+  revalidatePath(
+    `/lessons/${lessonPlanVersionId}/items/${lessonPlanItemId}`,
+  );
+  return loadLearnerLessonViewModel(lessonPlanVersionId);
+}
+
+export async function revertReadingCompletedAction(
+  lessonPlanVersionId: string,
+  lessonPlanItemId: string,
+  lessonReadingId: string,
+): Promise<LearnerLessonViewModel> {
+  const ctx = await getLearnerDbContext();
+  if (!ctx) {
+    if (process.env.NODE_ENV === "development") {
+      throw new Error(
+        "Local lesson progress without sign-in needs SUPABASE_SERVICE_ROLE_KEY in web/.env.local (dev only).",
+      );
+    }
+    throw new Error("Sign in to save progress.");
+  }
+  const supabase = ctx.client;
+  const vm = await loadLearnerLessonViewModel(lessonPlanVersionId);
+  if (!vm.learnerProgressId) {
+    throw new Error("Start the lesson before updating progress.");
+  }
+
+  if (
+    !canRevertReadingCompletion(vm.steps, lessonPlanItemId, lessonReadingId)
+  ) {
+    throw new Error(
+      "You can only redo the most recently completed reading (nothing later may be complete).",
+    );
+  }
+
+  const step = vm.steps.find((s) => s.lessonPlanItemId === lessonPlanItemId);
+  if (!step?.itemProgressId) {
+    throw new Error("Missing progress row for this lesson.");
+  }
+  const reading = step.readings.find((r) => r.lessonReadingId === lessonReadingId);
+  if (!reading?.readingProgressId) {
+    throw new Error("Missing reading progress row.");
+  }
+  if (reading.articleStatus !== "completed") {
+    throw new Error("This reading is not marked complete.");
+  }
+
+  const { data: lrMeta, error: lrErr } = await supabase
+    .from("lesson_reading")
+    .select(
+      `
+      id,
+      lesson_plan_item ( lesson_plan_version_id )
+    `,
+    )
+    .eq("id", lessonReadingId)
+    .maybeSingle();
+
+  if (lrErr) {
+    throw new Error(lrErr.message);
+  }
+  const lpItem = lrMeta
+    ? (Array.isArray((lrMeta as { lesson_plan_item?: unknown }).lesson_plan_item)
+        ? (lrMeta as { lesson_plan_item: unknown[] }).lesson_plan_item[0]
+        : (lrMeta as { lesson_plan_item?: unknown }).lesson_plan_item)
+    : null;
+  const lpvId =
+    lpItem &&
+    typeof lpItem === "object" &&
+    typeof (lpItem as { lesson_plan_version_id?: string }).lesson_plan_version_id ===
+      "string"
+      ? (lpItem as { lesson_plan_version_id: string }).lesson_plan_version_id
+      : null;
+
+  if (!lrMeta || lpvId !== lessonPlanVersionId) {
+    throw new Error("This reading does not belong to the current lesson version.");
+  }
+
+  const { error: urpErr } = await supabase
+    .from("lesson_reading_progress")
+    .update({
+      article_status: "pending",
+      completed_at: null,
+      completed_content_version_id: null,
+    })
+    .eq("id", reading.readingProgressId);
+
+  if (urpErr) {
+    throw new Error(urpErr.message);
+  }
+
+  const updatedReadings = step.readings.map((r) =>
+    r.lessonReadingId === lessonReadingId
+      ? {
+          ...r,
+          articleStatus: "pending",
+          completedAt: null,
+          completedContentVersionId: null,
+        }
+      : r,
+  );
+  const agg = deriveLessonAggregateFromReadings(updatedReadings);
+
+  const { error: lipErr } = await supabase
+    .from("lesson_item_progress")
+    .update({
+      article_status: agg.articleStatus,
+      completed_at: agg.completedAt,
+      completed_content_version_id: agg.completedContentVersionId,
+    })
+    .eq("id", step.itemProgressId);
+
+  if (lipErr) {
+    throw new Error(lipErr.message);
+  }
+
+  await syncLearnerProgressReopenIfIncomplete(lessonPlanVersionId);
+
+  revalidatePath(`/lessons/${lessonPlanVersionId}`);
+  revalidatePath(
+    `/lessons/${lessonPlanVersionId}/items/${lessonPlanItemId}`,
+  );
   return loadLearnerLessonViewModel(lessonPlanVersionId);
 }
 
@@ -420,31 +684,57 @@ export async function submitQuizAttemptAction(
     return loadLearnerLessonViewModel(lessonPlanVersionId);
   }
 
-  const { data: itemMeta, error: itemErr } = await supabase
-    .from("lesson_plan_item")
+  const { data: readingRows, error: readErr } = await supabase
+    .from("lesson_reading")
     .select(
-      "effective_content_version_id, content_item ( current_version_id )",
+      `
+      id,
+      effective_content_version_id,
+      content_item ( current_version_id )
+    `,
     )
-    .eq("id", lessonPlanItemId)
-    .maybeSingle();
+    .eq("lesson_plan_item_id", lessonPlanItemId)
+    .order("reading_sequence", { ascending: true });
 
-  if (itemErr) {
-    throw new Error(itemErr.message);
+  if (readErr) {
+    throw new Error(readErr.message);
   }
-  if (!itemMeta) {
-    throw new Error("Missing lesson item.");
+  const reads = readingRows ?? [];
+  if (reads.length === 0) {
+    throw new Error("Missing lesson readings.");
   }
 
-  const currentVid = parseContentItemCurrentVersionEmbed(itemMeta.content_item);
-  const completedVersionId =
-    currentVid ?? itemMeta.effective_content_version_id;
+  const nowIso = new Date().toISOString();
+  let lastCompletedVersionId = "";
+  for (const row of reads) {
+    const currentVid = parseContentItemCurrentVersionEmbed(
+      (row as { content_item?: unknown }).content_item,
+    );
+    const vid =
+      currentVid ??
+      (row as { effective_content_version_id: string })
+        .effective_content_version_id;
+    lastCompletedVersionId = vid;
+    const { error: lrpUp } = await supabase
+      .from("lesson_reading_progress")
+      .update({
+        article_status: "completed",
+        completed_at: nowIso,
+        completed_content_version_id: vid,
+      })
+      .eq("lesson_item_progress_id", lipId)
+      .eq("lesson_reading_id", (row as { id: string }).id);
+    if (lrpUp) {
+      throw new Error(lrpUp.message);
+    }
+  }
 
   const { error: lipUp } = await supabase
     .from("lesson_item_progress")
     .update({
       article_status: "completed",
-      completed_at: new Date().toISOString(),
-      completed_content_version_id: completedVersionId,
+      completed_at: nowIso,
+      completed_content_version_id: lastCompletedVersionId,
     })
     .eq("id", lipId);
 
@@ -518,10 +808,17 @@ export async function regenerateLessonPlanWithLatestAction(
       `
       id,
       sequence,
-      content_item_id,
-      effective_content_version_id,
+      title,
+      learning_goal,
+      tools,
       requires_quiz,
-      content_item ( current_version_id )
+      lesson_reading (
+        id,
+        reading_sequence,
+        content_item_id,
+        effective_content_version_id,
+        content_item ( current_version_id )
+      )
     `,
     )
     .eq("lesson_plan_version_id", lessonPlanVersionId)
@@ -535,15 +832,38 @@ export async function regenerateLessonPlanWithLatestAction(
     throw new Error("This lesson version has no items.");
   }
 
-  const newEffectives = items.map((row) => {
-    const cur = parseContentItemCurrentVersionEmbed(
-      (row as { content_item?: unknown }).content_item,
-    );
+  type OldReadingRow = {
+    id: string;
+    reading_sequence: number;
+    content_item_id: string;
+    effective_content_version_id: string;
+    content_item: unknown;
+  };
+
+  type OldItemRow = {
+    id: string;
+    sequence: number;
+    title: string | null;
+    learning_goal: string | null;
+    tools: unknown;
+    requires_quiz: boolean;
+    lesson_reading: OldReadingRow[] | OldReadingRow | null;
+  };
+
+  function normalizeReadings(raw: OldItemRow["lesson_reading"]): OldReadingRow[] {
+    const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
+    return [...list].sort((a, b) => a.reading_sequence - b.reading_sequence);
+  }
+
+  function newEffectiveForReading(r: OldReadingRow): string {
+    const cur = parseContentItemCurrentVersionEmbed(r.content_item);
     if (!cur) {
       throw new Error("Missing current_version_id for a content item.");
     }
     return cur;
-  });
+  }
+
+  const typedOld = items as OldItemRow[];
 
   const nextVersionNumber = lpv.version_number + 1;
 
@@ -572,21 +892,12 @@ export async function regenerateLessonPlanWithLatestAction(
     throw new Error(deactivateErr.message);
   }
 
-  type OldItemRow = {
-    id: string;
-    sequence: number;
-    content_item_id: string;
-    effective_content_version_id: string;
-    requires_quiz: boolean;
-  };
-
-  const typedOld = items as OldItemRow[];
-
-  const insertPayload = typedOld.map((row, i) => ({
+  const insertPayload = typedOld.map((row) => ({
     lesson_plan_version_id: newLpv.id,
     sequence: row.sequence,
-    content_item_id: row.content_item_id,
-    effective_content_version_id: newEffectives[i]!,
+    title: row.title,
+    learning_goal: row.learning_goal,
+    tools: row.tools,
     requires_quiz: row.requires_quiz,
   }));
 
@@ -603,6 +914,23 @@ export async function regenerateLessonPlanWithLatestAction(
 
   if (newIds.length !== typedOld.length) {
     throw new Error("Failed to create new lesson items.");
+  }
+
+  for (let i = 0; i < typedOld.length; i++) {
+    const oldReads = normalizeReadings(typedOld[i]!.lesson_reading);
+    const newItemId = newIds[i]!;
+    const readingInserts = oldReads.map((r) => ({
+      lesson_plan_item_id: newItemId,
+      reading_sequence: r.reading_sequence,
+      content_item_id: r.content_item_id,
+      effective_content_version_id: newEffectiveForReading(r),
+    }));
+    if (readingInserts.length > 0) {
+      const { error: insR } = await admin.from("lesson_reading").insert(readingInserts);
+      if (insR) {
+        throw new Error(insR.message);
+      }
+    }
   }
 
   for (let i = 0; i < typedOld.length; i++) {
@@ -647,10 +975,37 @@ export async function regenerateLessonPlanWithLatestAction(
     if (idx < 0) {
       throw new Error("Progress row references an unknown lesson item.");
     }
-    const oldEff = typedOld[idx]!.effective_content_version_id;
-    const newEff = newEffectives[idx]!;
+    const oldReads = normalizeReadings(typedOld[idx]!.lesson_reading);
     const newItemId = newIds[idx]!;
-    const versionChanged = oldEff !== newEff;
+    const versionChanged = oldReads.some(
+      (r) => r.effective_content_version_id !== newEffectiveForReading(r),
+    );
+
+    const { data: oldReadingRows, error: oldRErr } = await admin
+      .from("lesson_reading")
+      .select("id, reading_sequence")
+      .eq("lesson_plan_item_id", typedOld[idx]!.id)
+      .order("reading_sequence", { ascending: true });
+
+    if (oldRErr) {
+      throw new Error(oldRErr.message);
+    }
+
+    const { data: newReadingRows, error: newRErr } = await admin
+      .from("lesson_reading")
+      .select("id, reading_sequence")
+      .eq("lesson_plan_item_id", newItemId)
+      .order("reading_sequence", { ascending: true });
+
+    if (newRErr) {
+      throw new Error(newRErr.message);
+    }
+
+    const oldRList = oldReadingRows ?? [];
+    const newRList = newReadingRows ?? [];
+    if (oldRList.length !== newRList.length) {
+      throw new Error("Reading row count mismatch after regenerate.");
+    }
 
     if (versionChanged) {
       const { error: delA } = await admin
@@ -659,6 +1014,13 @@ export async function regenerateLessonPlanWithLatestAction(
         .eq("lesson_item_progress_id", lip.id);
       if (delA) {
         throw new Error(delA.message);
+      }
+      const { error: delLrp } = await admin
+        .from("lesson_reading_progress")
+        .delete()
+        .eq("lesson_item_progress_id", lip.id);
+      if (delLrp) {
+        throw new Error(delLrp.message);
       }
       const { error: upL } = await admin
         .from("lesson_item_progress")
@@ -672,6 +1034,16 @@ export async function regenerateLessonPlanWithLatestAction(
       if (upL) {
         throw new Error(upL.message);
       }
+      const { error: insLrp } = await admin.from("lesson_reading_progress").insert(
+        newRList.map((nr) => ({
+          lesson_item_progress_id: lip.id,
+          lesson_reading_id: nr.id,
+          article_status: "pending",
+        })),
+      );
+      if (insLrp) {
+        throw new Error(insLrp.message);
+      }
     } else {
       const { error: upL } = await admin
         .from("lesson_item_progress")
@@ -679,6 +1051,21 @@ export async function regenerateLessonPlanWithLatestAction(
         .eq("id", lip.id);
       if (upL) {
         throw new Error(upL.message);
+      }
+      for (let j = 0; j < oldRList.length; j++) {
+        const oldRid = oldRList[j]!.id;
+        const newRid = newRList[j]!.id;
+        if (oldRid === newRid) {
+          continue;
+        }
+        const { error: upLrp } = await admin
+          .from("lesson_reading_progress")
+          .update({ lesson_reading_id: newRid })
+          .eq("lesson_item_progress_id", lip.id)
+          .eq("lesson_reading_id", oldRid);
+        if (upLrp) {
+          throw new Error(upLrp.message);
+        }
       }
     }
   }

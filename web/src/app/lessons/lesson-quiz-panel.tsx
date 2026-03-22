@@ -136,7 +136,7 @@ export default function LessonQuizPanel({
   if (articleCompleted) {
     return (
       <details
-        className="rounded-lg border border-border bg-card"
+        className="rounded-md border border-border bg-card"
         open={open}
         onToggle={(e) => setOpen(e.currentTarget.open)}
       >
@@ -152,7 +152,7 @@ export default function LessonQuizPanel({
 
   return (
     <details
-      className="rounded-lg border border-border bg-card"
+      className="rounded-md border border-border bg-card"
       open={open}
       onToggle={(e) => setOpen(e.currentTarget.open)}
     >

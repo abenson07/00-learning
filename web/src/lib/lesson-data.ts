@@ -1,10 +1,37 @@
-import { getAuthUser } from "@/lib/auth/server";
+import { getLearnerDbContext } from "@/lib/learner-db-context";
 import {
   listRelatedContentItems,
   type ContentItemListRow,
 } from "@/lib/library-data";
+import {
+  deriveLessonAggregateFromReadings,
+  parseToolsJson,
+  type LearnerLessonViewModel,
+  type LessonPlanLessonMeta,
+  type LessonReadingMeta,
+  type LessonReadingProgressState,
+  type LessonStepState,
+} from "@/lib/lesson-learner-model";
 import { createSupabaseAnonServerClient } from "@/lib/supabase/server";
 import { createSupabaseUserServerClient } from "@/lib/supabase/server-user";
+
+export type {
+  LearnerLessonViewModel,
+  LessonPlanLessonMeta,
+  LessonReadingMeta,
+  LessonReadingProgressState,
+  LessonStepState,
+} from "@/lib/lesson-learner-model";
+export {
+  buildPrerequisiteBannerText,
+  canRevertReadingCompletion,
+  deriveLessonAggregateFromReadings,
+  findFirstIncompleteReadingGlobal,
+  getNextReadingDestination,
+  globalReadingEntries,
+  isViewingAheadOfCanonical,
+  parseToolsJson,
+} from "@/lib/lesson-learner-model";
 
 function unwrapOne<T>(value: T | T[] | null | undefined): T | null {
   if (value == null) {
@@ -26,17 +53,8 @@ export type LessonPlanVersionMeta = {
   title: string;
   description: string | null;
   domainName: string;
-};
-
-export type LessonPlanStepMeta = {
-  lessonPlanItemId: string;
-  sequence: number;
-  contentItemId: string;
-  contentTitle: string;
-  effectiveContentVersionId: string;
-  /** `content_item.current_version_id` — latest published version for this article */
-  contentItemCurrentVersionId: string | null;
-  requiresQuiz: boolean;
+  learningGoal: string | null;
+  planTools: string[];
 };
 
 export type ArticleSnapshotRead = {
@@ -52,27 +70,6 @@ export type ArticleSnapshotRead = {
     versionNumber: number;
     isLatest: boolean;
   };
-};
-
-export type LessonStepState = LessonPlanStepMeta & {
-  itemProgressId: string | null;
-  articleStatus: string;
-  completedAt: string | null;
-  completedContentVersionId: string | null;
-};
-
-export type LearnerLessonViewModel = {
-  learnerProgressId: string | null;
-  learnerStatus: string | null;
-  learnerCompletedAt: string | null;
-  steps: LessonStepState[];
-  /** Index of first step whose article is not completed; `steps.length` when all done */
-  activeStepIndex: number;
-  /**
-   * True when at least one completed step was finished on an older content version than
-   * the article’s current version (learn-006 regenerate entry point).
-   */
-  canRegenerateLessonPlan: boolean;
 };
 
 export type QuizChoice = { id: string; label: string };
@@ -204,7 +201,7 @@ export async function getLessonPlanVersionMeta(
 
   const { data: lp, error: lpError } = await supabase
     .from("lesson_plan")
-    .select("id, title, description, domain_id")
+    .select("id, title, description, domain_id, learning_goal, tools")
     .eq("id", lpv.lesson_plan_id)
     .maybeSingle();
 
@@ -230,12 +227,17 @@ export async function getLessonPlanVersionMeta(
     title: lp.title,
     description: lp.description,
     domainName: domain?.name ?? "—",
+    learningGoal:
+      typeof (lp as { learning_goal?: string }).learning_goal === "string"
+        ? (lp as { learning_goal: string }).learning_goal
+        : null,
+    planTools: parseToolsJson((lp as { tools?: unknown }).tools),
   };
 }
 
-export async function getLessonPlanSteps(
+export async function getLessonPlanLessons(
   lessonPlanVersionId: string,
-): Promise<LessonPlanStepMeta[] | null> {
+): Promise<LessonPlanLessonMeta[] | null> {
   const supabase = createSupabaseAnonServerClient();
 
   const { data: lpv, error: lpvError } = await supabase
@@ -257,10 +259,17 @@ export async function getLessonPlanSteps(
       `
       id,
       sequence,
-      content_item_id,
-      effective_content_version_id,
+      title,
+      learning_goal,
+      tools,
       requires_quiz,
-      content_item ( title, current_version_id )
+      lesson_reading (
+        id,
+        reading_sequence,
+        content_item_id,
+        effective_content_version_id,
+        content_item ( title, current_version_id )
+      )
     `,
     )
     .eq("lesson_plan_version_id", lessonPlanVersionId)
@@ -270,13 +279,22 @@ export async function getLessonPlanSteps(
     throw new Error(error.message);
   }
 
+  type RawReading = {
+    id: string;
+    reading_sequence: number;
+    content_item_id: string;
+    effective_content_version_id: string;
+    content_item: unknown;
+  };
+
   type RawItem = {
     id: string;
     sequence: number;
-    content_item_id: string;
-    effective_content_version_id: string;
+    title: string | null;
+    learning_goal: string | null;
+    tools: unknown;
     requires_quiz: boolean;
-    content_item: unknown;
+    lesson_reading: RawReading[] | RawReading | null;
   };
 
   function contentTitleFromEmbed(raw: unknown): string {
@@ -291,15 +309,57 @@ export async function getLessonPlanSteps(
       : null;
   }
 
-  return ((rows as RawItem[] | null) ?? []).map((row) => ({
-    lessonPlanItemId: row.id,
-    sequence: row.sequence,
-    contentItemId: row.content_item_id,
-    contentTitle: contentTitleFromEmbed(row.content_item),
-    effectiveContentVersionId: row.effective_content_version_id,
-    contentItemCurrentVersionId: contentCurrentVersionFromEmbed(row.content_item),
-    requiresQuiz: row.requires_quiz,
-  }));
+  return ((rows as RawItem[] | null) ?? []).map((row) => {
+    const rawReadings = row.lesson_reading;
+    const readingList = Array.isArray(rawReadings)
+      ? rawReadings
+      : rawReadings
+        ? [rawReadings]
+        : [];
+    readingList.sort((a, b) => a.reading_sequence - b.reading_sequence);
+    const readings: LessonReadingMeta[] = readingList.map((lr) => ({
+      lessonReadingId: lr.id,
+      readingSequence: lr.reading_sequence,
+      contentItemId: lr.content_item_id,
+      contentTitle: contentTitleFromEmbed(lr.content_item),
+      effectiveContentVersionId: lr.effective_content_version_id,
+      contentItemCurrentVersionId: contentCurrentVersionFromEmbed(lr.content_item),
+    }));
+    const lessonTitle =
+      typeof row.title === "string" && row.title.trim() !== ""
+        ? row.title
+        : readings[0]?.contentTitle ?? "Lesson";
+    return {
+      lessonPlanItemId: row.id,
+      sequence: row.sequence,
+      lessonTitle,
+      lessonLearningGoal:
+        typeof row.learning_goal === "string" ? row.learning_goal : null,
+      lessonTools: parseToolsJson(row.tools),
+      requiresQuiz: row.requires_quiz,
+      readings,
+    };
+  });
+}
+
+export async function getLessonPlanLessonByItemId(
+  lessonPlanVersionId: string,
+  lessonPlanItemId: string,
+): Promise<LessonPlanLessonMeta | null> {
+  const lessons = await getLessonPlanLessons(lessonPlanVersionId);
+  if (!lessons) {
+    return null;
+  }
+  return (
+    lessons.find((l) => l.lessonPlanItemId === lessonPlanItemId) ?? null
+  );
+}
+
+/** @deprecated Use getLessonPlanLessons */
+export async function getLessonPlanSteps(
+  lessonPlanVersionId: string,
+): Promise<LessonPlanLessonMeta[] | null> {
+  return getLessonPlanLessons(lessonPlanVersionId);
 }
 
 /** Full quiz row for server-side scoring (includes correct answer). */
@@ -512,42 +572,182 @@ export async function buildArticleReadBundleForLessonStep(input: {
   return { snapshot, related, addendumMarkdown };
 }
 
+function emptyViewModel(
+  planLearningGoal: string | null,
+  planTools: string[],
+  aggregatedTools: string[],
+): LearnerLessonViewModel {
+  return {
+    planLearningGoal,
+    planTools,
+    aggregatedTools,
+    learnerProgressId: null,
+    learnerStatus: null,
+    learnerCompletedAt: null,
+    steps: [],
+    activeStepIndex: 0,
+    activeReadingIndex: 0,
+    canRegenerateLessonPlan: false,
+  };
+}
+
+async function loadPlanGoalAndTools(
+  lessonPlanVersionId: string,
+): Promise<{ planLearningGoal: string | null; planTools: string[] }> {
+  const supabase = createSupabaseAnonServerClient();
+  const { data: lpv, error } = await supabase
+    .from("lesson_plan_version")
+    .select("lesson_plan ( learning_goal, tools )")
+    .eq("id", lessonPlanVersionId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  const lp = unwrapOne((lpv as { lesson_plan?: unknown } | null)?.lesson_plan);
+  if (!lp || typeof lp !== "object") {
+    return { planLearningGoal: null, planTools: [] };
+  }
+  const o = lp as Record<string, unknown>;
+  return {
+    planLearningGoal: typeof o.learning_goal === "string" ? o.learning_goal : null,
+    planTools: parseToolsJson(o.tools),
+  };
+}
+
+function buildAggregatedTools(stepsMeta: LessonPlanLessonMeta[]): string[] {
+  const set = new Set<string>();
+  for (const s of stepsMeta) {
+    for (const t of s.lessonTools) {
+      set.add(t);
+    }
+  }
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
 export async function loadLearnerLessonViewModel(
   lessonPlanVersionId: string,
 ): Promise<LearnerLessonViewModel> {
-  const stepsMeta = await getLessonPlanSteps(lessonPlanVersionId);
+  const { planLearningGoal, planTools } =
+    await loadPlanGoalAndTools(lessonPlanVersionId);
+  const stepsMeta = await getLessonPlanLessons(lessonPlanVersionId);
+  const aggregatedTools = stepsMeta ? buildAggregatedTools(stepsMeta) : [];
+
   if (!stepsMeta || stepsMeta.length === 0) {
-    return {
-      learnerProgressId: null,
-      learnerStatus: null,
-      learnerCompletedAt: null,
-      steps: [],
-      activeStepIndex: 0,
-      canRegenerateLessonPlan: false,
-    };
+    return emptyViewModel(planLearningGoal, planTools, aggregatedTools);
   }
 
-  const auth = await getAuthUser();
-  if (!auth) {
-    const steps: LessonStepState[] = stepsMeta.map((s) => ({
-      ...s,
-      itemProgressId: null,
-      articleStatus: "pending",
-      completedAt: null,
-      completedContentVersionId: null,
-    }));
+  const mergeSteps = (
+    itemRows: {
+      lesson_plan_item_id: string;
+      id: string;
+      article_status: string;
+      completed_at: string | null;
+      completed_content_version_id: string | null;
+    }[],
+    lrpRows: {
+      lesson_item_progress_id: string;
+      lesson_reading_id: string;
+      id: string;
+      article_status: string;
+      completed_at: string | null;
+      completed_content_version_id: string | null;
+    }[],
+  ): LessonStepState[] => {
+    const byItemId = new Map(
+      itemRows.map((r) => [
+        r.lesson_plan_item_id,
+        {
+          id: r.id,
+          articleStatus: r.article_status,
+          completedAt: r.completed_at,
+          completedContentVersionId: r.completed_content_version_id,
+        },
+      ]),
+    );
+    const lrpByLip = new Map<string, typeof lrpRows>();
+    for (const row of lrpRows) {
+      const list = lrpByLip.get(row.lesson_item_progress_id) ?? [];
+      list.push(row);
+      lrpByLip.set(row.lesson_item_progress_id, list);
+    }
+
+    return stepsMeta.map((meta) => {
+      const lip = byItemId.get(meta.lessonPlanItemId);
+      const lipId = lip?.id ?? null;
+      const lrps = lipId ? (lrpByLip.get(lipId) ?? []) : [];
+      const lrpByReadingId = new Map(
+        lrps.map((r) => [
+          r.lesson_reading_id,
+          {
+            id: r.id,
+            articleStatus: r.article_status,
+            completedAt: r.completed_at,
+            completedContentVersionId: r.completed_content_version_id,
+          },
+        ]),
+      );
+
+      const readings: LessonReadingProgressState[] = meta.readings.map((rm) => {
+        const pr = lrpByReadingId.get(rm.lessonReadingId);
+        return {
+          ...rm,
+          readingProgressId: pr?.id ?? null,
+          articleStatus: pr?.articleStatus ?? "pending",
+          completedAt: pr?.completedAt ?? null,
+          completedContentVersionId: pr?.completedContentVersionId ?? null,
+        };
+      });
+
+      const derived = deriveLessonAggregateFromReadings(readings);
+      return {
+        lessonPlanItemId: meta.lessonPlanItemId,
+        sequence: meta.sequence,
+        lessonTitle: meta.lessonTitle,
+        lessonLearningGoal: meta.lessonLearningGoal,
+        lessonTools: meta.lessonTools,
+        requiresQuiz: meta.requiresQuiz,
+        itemProgressId: lipId,
+        articleStatus: derived.articleStatus,
+        completedAt: derived.completedAt,
+        completedContentVersionId: derived.completedContentVersionId,
+        readings,
+      };
+    });
+  };
+
+  const ctx = await getLearnerDbContext();
+  if (!ctx) {
+    const steps = mergeSteps([], []);
+    let activeStepIndex = steps.findIndex((st) => st.articleStatus !== "completed");
+    if (activeStepIndex < 0) {
+      activeStepIndex = steps.length;
+    }
+    const activeLesson = activeStepIndex < steps.length ? steps[activeStepIndex] : null;
+    const firstIncompleteRi = activeLesson
+      ? activeLesson.readings.findIndex((r) => r.articleStatus !== "completed")
+      : -1;
+    const activeReadingIndex =
+      activeLesson && firstIncompleteRi >= 0
+        ? firstIncompleteRi
+        : activeLesson && activeLesson.readings.length > 0
+          ? activeLesson.readings.length - 1
+          : 0;
     return {
+      planLearningGoal,
+      planTools,
+      aggregatedTools,
       learnerProgressId: null,
       learnerStatus: null,
       learnerCompletedAt: null,
       steps,
-      activeStepIndex: 0,
+      activeStepIndex,
+      activeReadingIndex,
       canRegenerateLessonPlan: false,
     };
   }
 
-  const { userId } = auth;
-  const supabase = await createSupabaseUserServerClient();
+  const { userId, client: supabase } = ctx;
 
   const { data: progress, error: progressError } = await supabase
     .from("learner_progress")
@@ -563,19 +763,31 @@ export async function loadLearnerLessonViewModel(
   }
 
   if (!progress) {
-    const steps: LessonStepState[] = stepsMeta.map((s) => ({
-      ...s,
-      itemProgressId: null,
-      articleStatus: "pending",
-      completedAt: null,
-      completedContentVersionId: null,
-    }));
+    const steps = mergeSteps([], []);
+    let activeStepIndex = steps.findIndex((st) => st.articleStatus !== "completed");
+    if (activeStepIndex < 0) {
+      activeStepIndex = steps.length;
+    }
+    const activeLesson = activeStepIndex < steps.length ? steps[activeStepIndex] : null;
+    const firstIncompleteRiNp = activeLesson
+      ? activeLesson.readings.findIndex((r) => r.articleStatus !== "completed")
+      : -1;
+    const activeReadingIndex =
+      activeLesson && firstIncompleteRiNp >= 0
+        ? firstIncompleteRiNp
+        : activeLesson && activeLesson.readings.length > 0
+          ? activeLesson.readings.length - 1
+          : 0;
     return {
+      planLearningGoal,
+      planTools,
+      aggregatedTools,
       learnerProgressId: null,
       learnerStatus: null,
       learnerCompletedAt: null,
       steps,
-      activeStepIndex: 0,
+      activeStepIndex,
+      activeReadingIndex,
       canRegenerateLessonPlan: false,
     };
   }
@@ -591,49 +803,77 @@ export async function loadLearnerLessonViewModel(
     throw new Error(itemErr.message);
   }
 
-  const byItemId = new Map(
-    (itemRows ?? []).map((r) => [
-      r.lesson_plan_item_id,
-      {
-        id: r.id as string,
-        articleStatus: r.article_status as string,
-        completedAt: r.completed_at as string | null,
-        completedContentVersionId:
-          (r.completed_content_version_id as string | null) ?? null,
-      },
-    ]),
-  );
+  const lipIds = (itemRows ?? []).map((r) => r.id as string);
+  let lrpRows: {
+    lesson_item_progress_id: string;
+    lesson_reading_id: string;
+    id: string;
+    article_status: string;
+    completed_at: string | null;
+    completed_content_version_id: string | null;
+  }[] = [];
 
-  const steps: LessonStepState[] = stepsMeta.map((s) => {
-    const lip = byItemId.get(s.lessonPlanItemId);
-    return {
-      ...s,
-      itemProgressId: lip?.id ?? null,
-      articleStatus: lip?.articleStatus ?? "pending",
-      completedAt: lip?.completedAt ?? null,
-      completedContentVersionId: lip?.completedContentVersionId ?? null,
-    };
-  });
+  if (lipIds.length > 0) {
+    const { data: lrData, error: lrpErr } = await supabase
+      .from("lesson_reading_progress")
+      .select(
+        "id, lesson_item_progress_id, lesson_reading_id, article_status, completed_at, completed_content_version_id",
+      )
+      .in("lesson_item_progress_id", lipIds);
+
+    if (lrpErr) {
+      throw new Error(lrpErr.message);
+    }
+    lrpRows = (lrData ?? []) as typeof lrpRows;
+  }
+
+  const steps = mergeSteps(
+    (itemRows ?? []) as {
+      lesson_plan_item_id: string;
+      id: string;
+      article_status: string;
+      completed_at: string | null;
+      completed_content_version_id: string | null;
+    }[],
+    lrpRows,
+  );
 
   let activeStepIndex = steps.findIndex((st) => st.articleStatus !== "completed");
   if (activeStepIndex < 0) {
     activeStepIndex = steps.length;
   }
 
-  const canRegenerateLessonPlan = steps.some(
-    (st) =>
-      st.articleStatus === "completed" &&
-      !!st.completedContentVersionId &&
-      !!st.contentItemCurrentVersionId &&
-      st.completedContentVersionId !== st.contentItemCurrentVersionId,
+  const activeLesson = activeStepIndex < steps.length ? steps[activeStepIndex] : null;
+  const firstIncompleteRi = activeLesson
+    ? activeLesson.readings.findIndex((r) => r.articleStatus !== "completed")
+    : -1;
+  const activeReadingIndex =
+    activeLesson && firstIncompleteRi >= 0
+      ? firstIncompleteRi
+      : activeLesson && activeLesson.readings.length > 0
+        ? activeLesson.readings.length - 1
+        : 0;
+
+  const canRegenerateLessonPlan = steps.some((st) =>
+    st.readings.some(
+      (rd) =>
+        rd.articleStatus === "completed" &&
+        !!rd.completedContentVersionId &&
+        !!rd.contentItemCurrentVersionId &&
+        rd.completedContentVersionId !== rd.contentItemCurrentVersionId,
+    ),
   );
 
   return {
+    planLearningGoal,
+    planTools,
+    aggregatedTools,
     learnerProgressId: progress.id,
     learnerStatus: progress.status,
     learnerCompletedAt: progress.completed_at,
     steps,
     activeStepIndex,
+    activeReadingIndex,
     canRegenerateLessonPlan,
   };
 }

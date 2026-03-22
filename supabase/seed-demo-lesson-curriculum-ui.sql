@@ -1,10 +1,138 @@
--- learn-001 + learn-005 seed (requires schema + quiz_question migration applied — empty tables).
--- Supabase → SQL Editor: paste this whole file and Run.
--- After: domain 2; content_item 3; content_version 4 (Postgres article has v1+v2 for learn-006); lesson_plan_item 3; lesson_reading 3; quiz_question 9.
--- If you get duplicate-key errors, run clear-learn001-data.sql first, then this file again.
--- If you only need quiz rows (table exists, lesson items already seeded): use seed-quiz-only.sql.
+-- =============================================================================
+-- Demo seed: lesson curriculum UI (always fills plan goal, tools, lessons, readings)
+-- =============================================================================
+-- Prerequisites: all migrations through 20260322100000_lesson_reading_curriculum.sql.
+-- Supabase → SQL Editor → paste entire file → Run.
+--
+-- This script DELETEs only rows keyed to the fixed UUIDs below, then INSERTs the
+-- full demo again. Re-run anytime to reset the demo plan + articles (not your auth users).
+-- =============================================================================
 
--- Taxonomy (technical → databases → postgres_basics; agent → prompting → LLM_reasoning)
+-- --- Demo primary keys (do not reuse these IDs for production data you care about) ---
+-- lesson_plan:        b5555555-5555-4555-8555-555555555501
+-- lesson_plan_version: b6666666-6666-4666-8666-666666666601
+-- lesson_plan_items:  b8888888-8888-4888-8888-888888888801–803
+-- lesson_readings:    b9999999-9999-4999-8999-999999999801–803
+
+-- 1) Clear learner + quiz progress tied to this plan version
+delete from public.lesson_reading_progress
+where lesson_reading_id in (
+  select lr.id
+  from public.lesson_reading lr
+  join public.lesson_plan_item lpi on lpi.id = lr.lesson_plan_item_id
+  where lpi.lesson_plan_version_id = 'b6666666-6666-4666-8666-666666666601'
+);
+
+delete from public.quiz_attempt
+where lesson_item_progress_id in (
+  select lip.id
+  from public.lesson_item_progress lip
+  join public.lesson_plan_item lpi on lpi.id = lip.lesson_plan_item_id
+  where lpi.lesson_plan_version_id = 'b6666666-6666-4666-8666-666666666601'
+);
+
+delete from public.lesson_item_progress
+where lesson_plan_item_id in (
+  select id from public.lesson_plan_item
+  where lesson_plan_version_id = 'b6666666-6666-4666-8666-666666666601'
+);
+
+delete from public.learner_progress
+where lesson_plan_version_id = 'b6666666-6666-4666-8666-666666666601';
+
+-- 2) Clear quiz + curriculum rows for this plan version
+delete from public.quiz_question
+where lesson_plan_item_id in (
+  select id from public.lesson_plan_item
+  where lesson_plan_version_id = 'b6666666-6666-4666-8666-666666666601'
+);
+
+delete from public.lesson_reading
+where lesson_plan_item_id in (
+  select id from public.lesson_plan_item
+  where lesson_plan_version_id = 'b6666666-6666-4666-8666-666666666601'
+);
+
+delete from public.lesson_plan_item
+where lesson_plan_version_id = 'b6666666-6666-4666-8666-666666666601';
+
+delete from public.lesson_plan_version
+where id = 'b6666666-6666-4666-8666-666666666601';
+
+delete from public.lesson_plan
+where id = 'b5555555-5555-4555-8555-555555555501';
+
+-- 3) Clear reader artifacts + content for demo article versions
+delete from public.comment_ai_response
+where comment_id in (
+  select id from public.comment
+  where content_version_id in (
+    'b7777777-7777-4777-8777-777777777701',
+    'b7777777-7777-4777-8777-777777777711',
+    'b7777777-7777-4777-8777-777777777702',
+    'b7777777-7777-4777-8777-777777777703'
+  )
+);
+
+delete from public.comment
+where content_version_id in (
+  'b7777777-7777-4777-8777-777777777701',
+  'b7777777-7777-4777-8777-777777777711',
+  'b7777777-7777-4777-8777-777777777702',
+  'b7777777-7777-4777-8777-777777777703'
+);
+
+delete from public.highlight
+where content_version_id in (
+  'b7777777-7777-4777-8777-777777777701',
+  'b7777777-7777-4777-8777-777777777711',
+  'b7777777-7777-4777-8777-777777777702',
+  'b7777777-7777-4777-8777-777777777703'
+);
+
+update public.content_item
+set current_version_id = null
+where id in (
+  'b4444444-4444-4444-8444-444444444401',
+  'b4444444-4444-4444-8444-444444444402',
+  'b4444444-4444-4444-8444-444444444403'
+);
+
+delete from public.content_version
+where id in (
+  'b7777777-7777-4777-8777-777777777701',
+  'b7777777-7777-4777-8777-777777777711',
+  'b7777777-7777-4777-8777-777777777702',
+  'b7777777-7777-4777-8777-777777777703'
+);
+
+delete from public.content_item
+where id in (
+  'b4444444-4444-4444-8444-444444444401',
+  'b4444444-4444-4444-8444-444444444402',
+  'b4444444-4444-4444-8444-444444444403'
+);
+
+delete from public.topic
+where id in (
+  'b3333333-3333-4333-8333-333333333301',
+  'b3333333-3333-4333-8333-333333333302'
+);
+
+delete from public.category
+where id in (
+  'b2222222-2222-4222-8222-222222222201',
+  'b2222222-2222-4222-8222-222222222202'
+);
+
+delete from public.domain
+where id in (
+  'b1111111-1111-4111-8111-111111111101',
+  'b1111111-1111-4111-8111-111111111102'
+);
+
+-- 4) Insert full demo (plan goal + tools, lesson goals + tools, readings, quiz bank)
+
 insert into public.domain (id, name, slug, sort_order) values
   ('b1111111-1111-4111-8111-111111111101', 'technical', 'technical', 1),
   ('b1111111-1111-4111-8111-111111111102', 'agent', 'agent', 2);
@@ -17,7 +145,6 @@ insert into public.topic (id, category_id, name, slug, sort_order) values
   ('b3333333-3333-4333-8333-333333333301', 'b2222222-2222-4222-8222-222222222201', 'postgres_basics', 'postgres_basics', 1),
   ('b3333333-3333-4333-8333-333333333302', 'b2222222-2222-4222-8222-222222222202', 'LLM_reasoning', 'LLM_reasoning', 1);
 
--- Content items (articles)
 insert into public.content_item (id, topic_id, content_type, title, slug, sort_order, current_version_id) values
   ('b4444444-4444-4444-8444-444444444401', 'b3333333-3333-4333-8333-333333333301', 'article', 'Postgres concepts for builders', 'postgres-concepts', 1, null),
   ('b4444444-4444-4444-8444-444444444402', 'b3333333-3333-4333-8333-333333333302', 'article', 'JavaScript basics for agent tooling', 'js-basics-agents', 1, null),
@@ -69,12 +196,10 @@ insert into public.content_version (id, content_item_id, version_number, is_late
     null
   );
 
--- Postgres article: catalog “current” is v2; seeded lesson plan snapshot still pins step 1 to v1 until learner regenerates.
 update public.content_item set current_version_id = 'b7777777-7777-4777-8777-777777777711' where id = 'b4444444-4444-4444-8444-444444444401';
 update public.content_item set current_version_id = 'b7777777-7777-4777-8777-777777777702' where id = 'b4444444-4444-4444-8444-444444444402';
 update public.content_item set current_version_id = 'b7777777-7777-4777-8777-777777777703' where id = 'b4444444-4444-4444-8444-444444444403';
 
--- One lesson plan (active version): three lessons, each with one reading (Postgres → JS → Build)
 insert into public.lesson_plan (id, domain_id, title, description, sort_order, learning_goal, tools) values
   (
     'b5555555-5555-4555-8555-555555555501',
@@ -123,7 +248,6 @@ insert into public.lesson_reading (id, lesson_plan_item_id, reading_sequence, co
   ('b9999999-9999-4999-8999-999999999802', 'b8888888-8888-4888-8888-888888888802', 1, 'b4444444-4444-4444-8444-444444444402', 'b7777777-7777-4777-8777-777777777702'),
   ('b9999999-9999-4999-8999-999999999803', 'b8888888-8888-4888-8888-888888888803', 1, 'b4444444-4444-4444-8444-444444444403', 'b7777777-7777-4777-8777-777777777703');
 
--- learn-005: three MCQs per lesson step (choices: id + label)
 insert into public.quiz_question (id, lesson_plan_item_id, question_index, question_text, choices, correct_choice_id, max_points) values
   (
     'ca111111-1111-4111-8111-111111111101',
@@ -206,3 +330,27 @@ insert into public.quiz_question (id, lesson_plan_item_id, question_index, quest
     'a',
     1
   );
+
+-- 5) Verification (expect: plan_goal_filled true, lessons 3, readings 3, tools_json not null)
+select
+  lp.title as plan_title,
+  lp.learning_goal is not null and length(trim(lp.learning_goal)) > 0 as plan_goal_filled,
+  lp.tools is not null as plan_tools_json_set
+from public.lesson_plan lp
+where lp.id = 'b5555555-5555-4555-8555-555555555501';
+
+select count(*)::int as lesson_count
+from public.lesson_plan_item
+where lesson_plan_version_id = 'b6666666-6666-4666-8666-666666666601';
+-- Expected: 3
+
+select count(*)::int as reading_count from public.lesson_reading;
+-- Expected: 3
+
+select lpi.sequence, lpi.title, lpi.learning_goal is not null as lesson_has_goal
+from public.lesson_plan_item lpi
+where lpi.lesson_plan_version_id = 'b6666666-6666-4666-8666-666666666601'
+order by lpi.sequence;
+-- Expected: 3 rows, lesson_has_goal true each
+
+-- Open this version in the app: /lessons/b6666666-6666-4666-8666-666666666601

@@ -39,8 +39,8 @@ export default async function LibraryPage({
   if (!domain) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold">Library</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Library</h1>
+        <p className="text-muted-foreground leading-relaxed">
           No domains found. Run the Supabase schema and seed, then reload.
         </p>
       </div>
@@ -53,8 +53,8 @@ export default async function LibraryPage({
   if (!category) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold">Library</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Library</h1>
+        <p className="text-muted-foreground leading-relaxed">
           No categories for this domain yet.
         </p>
       </div>
@@ -67,8 +67,8 @@ export default async function LibraryPage({
   if (!topic) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold">Library</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Library</h1>
+        <p className="text-muted-foreground leading-relaxed">
           No topics in this category yet.
         </p>
       </div>
@@ -81,14 +81,17 @@ export default async function LibraryPage({
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <div>
-          <h1 className="text-2xl font-semibold">Library</h1>
-          <p className="text-muted-foreground text-sm">
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Library</h1>
+          <p className="text-muted-foreground text-sm leading-relaxed">
             Browse by domain, category, then topic.
           </p>
         </div>
-        <p className="text-muted-foreground text-xs">
+        <p className="text-muted-foreground text-xs leading-relaxed">
           Mock teacher/student role (for future progress writes) lives on the{" "}
-          <Link href="/lessons" className="text-foreground underline">
+          <Link
+            href="/lessons"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
             Lessons
           </Link>{" "}
           page.
@@ -97,19 +100,19 @@ export default async function LibraryPage({
 
       <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
         <aside className="flex w-full shrink-0 flex-col gap-6 lg:w-56">
-          <nav className="rounded-lg border border-border bg-card p-3">
-            <div className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <nav className="rounded-md border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 text-[0.65rem] font-semibold tracking-wider text-muted-foreground uppercase">
               Domain
             </div>
-            <ul className="flex flex-col gap-0.5">
+            <ul className="flex flex-col gap-1">
               {domains.map((d) => (
                 <li key={d.id}>
                   <Link
                     href={libraryHrefPartial({ domainId: d.id })}
                     className={cn(
-                      "block rounded-md px-2 py-1.5 text-sm hover:bg-muted",
+                      "block rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted/80",
                       d.id === domain.id &&
-                        "bg-muted font-medium text-foreground",
+                        "bg-foreground font-semibold text-background shadow-sm shadow-black/15",
                     )}
                   >
                     {d.name}
@@ -119,11 +122,11 @@ export default async function LibraryPage({
             </ul>
           </nav>
 
-          <nav className="rounded-lg border border-border bg-card p-3">
-            <div className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <nav className="rounded-md border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 text-[0.65rem] font-semibold tracking-wider text-muted-foreground uppercase">
               Category
             </div>
-            <ul className="flex flex-col gap-0.5">
+            <ul className="flex flex-col gap-1">
               {categories.map((c) => (
                 <li key={c.id}>
                   <Link
@@ -132,9 +135,9 @@ export default async function LibraryPage({
                       categoryId: c.id,
                     })}
                     className={cn(
-                      "block rounded-md px-2 py-1.5 text-sm hover:bg-muted",
+                      "block rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted/80",
                       c.id === category.id &&
-                        "bg-muted font-medium text-foreground",
+                        "bg-foreground font-semibold text-background shadow-sm shadow-black/15",
                     )}
                   >
                     {c.name}
@@ -144,11 +147,11 @@ export default async function LibraryPage({
             </ul>
           </nav>
 
-          <nav className="rounded-lg border border-border bg-card p-3">
-            <div className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <nav className="rounded-md border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 text-[0.65rem] font-semibold tracking-wider text-muted-foreground uppercase">
               Topic
             </div>
-            <ul className="flex flex-col gap-0.5">
+            <ul className="flex flex-col gap-1">
               {topics.map((t) => (
                 <li key={t.id}>
                   <Link
@@ -158,9 +161,9 @@ export default async function LibraryPage({
                       topicId: t.id,
                     })}
                     className={cn(
-                      "block rounded-md px-2 py-1.5 text-sm hover:bg-muted",
+                      "block rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted/80",
                       t.id === topic.id &&
-                        "bg-muted font-medium text-foreground",
+                        "bg-foreground font-semibold text-background shadow-sm shadow-black/15",
                     )}
                   >
                     {t.name}
@@ -172,9 +175,9 @@ export default async function LibraryPage({
         </aside>
 
         <section className="min-w-0 flex-1">
-          <div className="mb-4">
-            <h2 className="text-lg font-medium">Articles</h2>
-            <p className="text-muted-foreground text-sm">
+          <div className="mb-5">
+            <h2 className="text-lg font-bold tracking-tight">Articles</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">
               {topic.name.replaceAll("_", " ")} · {items.length} item
               {items.length === 1 ? "" : "s"}
             </p>
@@ -189,7 +192,7 @@ export default async function LibraryPage({
               {items.map((item) => (
                 <li key={item.id}>
                   <Link href={`/articles/${item.id}`}>
-                    <Card className="p-4 transition-colors hover:bg-muted/40">
+                    <Card className="p-4 transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-black/15">
                       <div className="flex flex-col gap-1">
                         <span className="font-medium">{item.title}</span>
                         <span className="text-muted-foreground text-xs">

@@ -25,10 +25,13 @@ export default async function LessonsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold">Lessons</h1>
-        <p className="text-muted-foreground text-sm">
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Lessons</h1>
+        <p className="text-muted-foreground text-sm leading-relaxed">
           Browse lesson plans below. You can tune your learning profile in{" "}
-          <Link href="/settings" className="text-primary font-medium hover:underline">
+          <Link
+            href="/settings"
+            className="font-semibold text-primary underline-offset-4 hover:underline"
+          >
             Settings
           </Link>{" "}
           when available.
@@ -37,12 +40,12 @@ export default async function LessonsPage() {
 
       <div className="flex flex-wrap items-center gap-2">
         {profile?.role === "teacher" ? (
-          <span className="rounded-full bg-violet-500/15 px-3 py-1 text-xs font-medium text-violet-800 dark:text-violet-200">
+          <span className="rounded-md border border-black/10 bg-muted px-3 py-1 text-xs font-semibold text-foreground">
             Teacher mode
           </span>
         ) : null}
         {profileLine ? (
-          <span className="text-muted-foreground rounded-full border border-border bg-muted/40 px-3 py-1 text-xs">
+          <span className="text-muted-foreground rounded-md border border-border/80 bg-muted/50 px-3 py-1 text-xs">
             Profile: {profileLine}
             {profile?.context && profile.context.length > 100 ? "…" : ""}
           </span>
@@ -54,7 +57,7 @@ export default async function LessonsPage() {
       </div>
 
       <div className="flex flex-col gap-4">
-        <h2 className="text-lg font-medium">Available lesson plans</h2>
+        <h2 className="text-lg font-bold tracking-tight">Available lesson plans</h2>
         {plans.length === 0 ? (
           <Card className="p-4">
             <p className="text-muted-foreground text-sm">
@@ -66,9 +69,9 @@ export default async function LessonsPage() {
           <ul className="flex flex-col gap-4">
             {plans.map((plan) => (
               <li key={plan.versionId}>
-                <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between">
+                <Card className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 flex flex-col gap-1">
-                    <h3 className="font-medium">{plan.title}</h3>
+                    <h3 className="font-semibold tracking-tight">{plan.title}</h3>
                     <p className="text-muted-foreground text-sm">
                       {plan.domainName}
                       {plan.description ? ` · ${plan.description}` : ""}

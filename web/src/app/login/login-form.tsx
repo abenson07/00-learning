@@ -66,7 +66,7 @@ export default function LoginForm({ nextPath }: Props) {
             type="email"
             autoComplete="email"
             required
-            className="border-border h-10 rounded-lg border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+            className="border-border h-10 rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/50"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -83,7 +83,7 @@ export default function LoginForm({ nextPath }: Props) {
             }
             required
             minLength={6}
-            className="border-border h-10 rounded-lg border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+            className="border-border h-10 rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/50"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />

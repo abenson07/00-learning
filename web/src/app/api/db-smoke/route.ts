@@ -134,10 +134,15 @@ export async function GET() {
         .select(
           `
           sequence,
+          title,
           requires_quiz,
-          effective_content_version_id,
-          content_item:content_item_id ( id, title, slug ),
-          content_version:effective_content_version_id ( version_number )
+          lesson_reading (
+            reading_sequence,
+            content_item_id,
+            effective_content_version_id,
+            content_item ( id, title, slug ),
+            content_version:effective_content_version_id ( version_number )
+          )
         `,
         )
         .eq("lesson_plan_version_id", activeVersion.id)

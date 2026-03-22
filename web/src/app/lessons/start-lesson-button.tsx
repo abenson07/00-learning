@@ -9,7 +9,7 @@ import { useAuthUser } from "@/lib/use-auth-user";
 
 export default function StartLessonButton({ versionId }: { versionId: string }) {
   const router = useRouter();
-  const { user, ready } = useAuthUser();
+  const { ready } = useAuthUser();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,9 +20,7 @@ export default function StartLessonButton({ versionId }: { versionId: string }) 
     setError(null);
     setPending(true);
     try {
-      if (user) {
-        await ensureLearnerProgressAction(versionId);
-      }
+      await ensureLearnerProgressAction(versionId);
       router.push(`/lessons/${versionId}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");

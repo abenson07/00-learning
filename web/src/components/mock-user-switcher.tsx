@@ -58,7 +58,7 @@ export default function MockUserSwitcher() {
   }, [user.role]);
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4">
+    <div className="flex flex-col gap-4 rounded-md border border-border bg-card p-4">
       <div className="flex flex-col gap-1">
         <div className="text-sm font-medium">Mock user (prototype mode)</div>
         <div className="text-muted-foreground">
@@ -93,7 +93,7 @@ export default function MockUserSwitcher() {
       <div className="flex flex-col gap-2">
         <div className="text-sm font-medium">User ID</div>
         <input
-          className="h-10 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+          className="h-10 rounded-md border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/50"
           value={user.id}
           onChange={(e) => setUser((u) => ({ ...u, id: e.target.value }))}
           placeholder="e.g. student-1"

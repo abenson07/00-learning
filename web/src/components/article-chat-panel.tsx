@@ -117,8 +117,8 @@ export default function ArticleChatPanel({
                 key={i}
                 className={
                   m.role === "user"
-                    ? "ml-4 rounded-lg bg-primary/10 px-2 py-1.5"
-                    : "mr-4 rounded-lg bg-background px-2 py-1.5"
+                    ? "ml-4 rounded-md bg-primary/10 px-2 py-1.5"
+                    : "mr-4 rounded-md bg-background px-2 py-1.5"
                 }
               >
                 <span className="text-muted-foreground text-[0.65rem] uppercase">

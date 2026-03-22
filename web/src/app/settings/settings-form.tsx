@@ -50,8 +50,8 @@ export default function SettingsForm({
   return (
     <Card className="max-w-lg p-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold">Learning profile</h1>
-        <p className="text-muted-foreground text-sm">
+        <h1 className="text-2xl font-bold tracking-tight">Learning profile</h1>
+        <p className="text-muted-foreground text-sm leading-relaxed">
           Used to tailor AI explanations in articles and chat.
         </p>
         <p className="text-muted-foreground text-xs">
@@ -60,7 +60,7 @@ export default function SettingsForm({
             {role === "teacher" ? "Teacher" : "Student"}
           </span>
           {role === "teacher" ? (
-            <span className="ml-2 rounded-md bg-violet-500/15 px-2 py-0.5 text-violet-700 dark:text-violet-300">
+            <span className="ml-2 rounded-md border border-black/10 bg-muted px-2.5 py-0.5 text-xs font-semibold text-foreground">
               Teacher mode
             </span>
           ) : null}
@@ -73,7 +73,7 @@ export default function SettingsForm({
           </label>
           <input
             id="occupation"
-            className="border-border h-10 rounded-lg border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+            className="border-border h-11 rounded-md border bg-background px-3 text-sm shadow-sm ring-1 ring-black/8 outline-none focus:ring-2 focus:ring-ring/40"
             placeholder="e.g. waiter, nurse, engineer"
             value={occupation}
             onChange={(e) => setOccupation(e.target.value)}
@@ -85,7 +85,7 @@ export default function SettingsForm({
           </label>
           <textarea
             id="context"
-            className="border-border min-h-[5rem] rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+            className="border-border min-h-[5rem] rounded-md border bg-background px-3 py-2 text-sm shadow-sm ring-1 ring-black/8 outline-none focus:ring-2 focus:ring-ring/40"
             placeholder="What should the tutor know about your goals or background?"
             value={context}
             onChange={(e) => setContext(e.target.value)}
@@ -97,7 +97,7 @@ export default function SettingsForm({
           </label>
           <select
             id="learningStyle"
-            className="border-border h-10 rounded-lg border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring/50"
+            className="border-border h-11 rounded-md border bg-background px-3 text-sm shadow-sm ring-1 ring-black/8 outline-none focus:ring-2 focus:ring-ring/40"
             value={learningStyle}
             onChange={(e) => setLearningStyle(e.target.value)}
           >

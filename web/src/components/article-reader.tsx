@@ -277,7 +277,7 @@ export default function ArticleReader({
       editorProps: {
         attributes: {
           class:
-            "article-body max-w-none text-[0.975rem] leading-relaxed outline-none [&_p]:mb-3 [&_p:last-child]:mb-0",
+            "article-body max-w-none font-sans text-[0.975rem] leading-relaxed outline-none [&_p]:mb-3 [&_p:last-child]:mb-0",
         },
       },
     },
@@ -573,7 +573,7 @@ export default function ArticleReader({
             ref={highlightToolbarRef}
             role="toolbar"
             aria-label="Highlight selection"
-            className="border-border bg-popover text-popover-foreground animate-in fade-in zoom-in-95 fixed z-50 flex max-w-[min(100vw-1.5rem,20rem)] items-center gap-1.5 rounded-lg border px-2 py-1.5 shadow-md duration-150"
+            className="border-border bg-popover text-popover-foreground animate-in fade-in zoom-in-95 fixed z-50 flex max-w-[min(100vw-1.5rem,20rem)] items-center gap-1.5 rounded-md border px-2 py-1.5 shadow-md duration-150"
             style={{
               left: highlightToolbar.centerX,
               top: highlightToolbar.topY,
