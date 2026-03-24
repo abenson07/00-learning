@@ -4,25 +4,11 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { DOMAIN_OPTIONS, normalizeDomain } from "@/lib/articles/domain";
+import type { HomeArticle } from "@/lib/articles/types";
 import { cn } from "@/lib/utils";
 
-export type HomeArticle = {
-  id: string;
-  title: string;
-  description: string | null;
-  category: string;
-  domain: string;
-};
-
-type DomainOption = {
-  key: string;
-  label: string;
-};
-
-const DOMAIN_OPTIONS: DomainOption[] = [
-  { key: "app-and-development", label: "App & Development" },
-  { key: "ai-and-development", label: "AI & Development" },
-];
+export type { HomeArticle };
 
 function toAnchorId(input: string) {
   return input
@@ -31,19 +17,16 @@ function toAnchorId(input: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-/** Match `article_domain` / UI labels without naive `.includes("ai")` (breaks on e.g. "training"). */
-function normalizeDomain(domain: string) {
-  const value = domain.trim().toLowerCase().replace(/\s+/g, " ");
-  if (
-    value === "ai & development" ||
-    value === "ai and development" ||
-    value === "ai" ||
-    value.startsWith("ai &") ||
-    value.startsWith("ai and")
-  ) {
-    return "ai-and-development";
-  }
-  return "app-and-development";
+function scrollToCategorySection(category: string) {
+  const el = document.getElementById(toAnchorId(category));
+  if (!el) return;
+  const reduceMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  el.scrollIntoView({
+    behavior: reduceMotion ? "auto" : "smooth",
+    block: "start",
+  });
 }
 
 type ArticlesBrowserProps = {
@@ -150,6 +133,10 @@ export function ArticlesBrowser({ articles, loadError }: ArticlesBrowserProps) {
                 "shrink-0 rounded-full border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
               )}
               href={`#${toAnchorId(category)}`}
+              onClick={(e) => {
+                e.preventDefault();
+                scrollToCategorySection(category);
+              }}
             >
               {category}
             </a>
@@ -162,20 +149,48 @@ export function ArticlesBrowser({ articles, loadError }: ArticlesBrowserProps) {
           <section key={category} id={toAnchorId(category)} className="scroll-mt-28">
             <h2 className="mb-3 text-lg font-semibold">{category}</h2>
             <div className="grid gap-3">
-              {groupedByCategory[category].map((article) => (
-                <Link
-                  key={article.id}
-                  href={`/articles/${article.id}`}
-                  className="rounded-lg border p-4 transition-colors hover:bg-accent/40"
-                >
-                  <h3 className="font-medium">{article.title}</h3>
-                  {article.description ? (
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {article.description}
-                    </p>
-                  ) : null}
-                </Link>
-              ))}
+              {groupedByCategory[category].map((article) => {
+                const cardInner = (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-medium text-foreground">{article.title}</h3>
+                      {article.comingSoon ? (
+                        <span className="rounded-full border border-orange-400/70 bg-orange-500/10 px-2 py-0.5 text-xs font-medium text-orange-700 dark:border-orange-500/50 dark:bg-orange-500/15 dark:text-orange-400">
+                          Coming Soon
+                        </span>
+                      ) : null}
+                    </div>
+                    {article.description ? (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {article.description}
+                      </p>
+                    ) : null}
+                  </>
+                );
+
+                if (article.comingSoon) {
+                  return (
+                    <div
+                      key={article.id}
+                      className="rounded-lg border p-4"
+                      aria-disabled="true"
+                      aria-label={`${article.title}, coming soon`}
+                    >
+                      {cardInner}
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={article.id}
+                    href={`/articles/${article.id}`}
+                    className="rounded-lg border p-4 transition-colors hover:bg-accent/40"
+                  >
+                    {cardInner}
+                  </Link>
+                );
+              })}
             </div>
           </section>
         ))}
