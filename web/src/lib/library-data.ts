@@ -285,3 +285,95 @@ export function librarySelectionHref(selection: {
   });
   return `/library?${q.toString()}`;
 }
+
+export type SimpleArticle = {
+  id: string;
+  title: string;
+  slug: string | null;
+  domain: string;
+  area: string;
+  category: string;
+  content: string;
+};
+
+export type GroupedArticles = Record<
+  string,
+  Record<string, Record<string, SimpleArticle[]>>
+>;
+
+function asText(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : null;
+}
+
+function mapSimpleArticle(row: Record<string, unknown>): SimpleArticle {
+  return {
+    id: String(row.id ?? ""),
+    title: asText(row.title) ?? "Untitled article",
+    slug: asText(row.slug),
+    domain: asText(row.domain) ?? "General",
+    area: asText(row.area) ?? "General",
+    category: asText(row.category) ?? "Uncategorized",
+    content:
+      asText(row.content) ??
+      asText(row.body) ??
+      asText(row.plain_text) ??
+      "No article content yet.",
+  };
+}
+
+export async function listSimpleArticles(): Promise<SimpleArticle[]> {
+  const supabase = createSupabaseAnonServerClient();
+  const { data, error } = await supabase.from("articles").select("*");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? [])
+    .filter((row): row is Record<string, unknown> => !!row && typeof row === "object")
+    .map((row) => mapSimpleArticle(row))
+    .filter((row) => row.id.length > 0)
+    .sort((a, b) => a.title.localeCompare(b.title));
+}
+
+export async function getSimpleArticleById(
+  articleId: string,
+): Promise<SimpleArticle | null> {
+  const supabase = createSupabaseAnonServerClient();
+  const { data, error } = await supabase
+    .from("articles")
+    .select("*")
+    .eq("id", articleId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+
+  const article = mapSimpleArticle(data as Record<string, unknown>);
+  return article.id.length ? article : null;
+}
+
+export function groupArticlesByDomainAreaCategory(
+  articles: SimpleArticle[],
+): GroupedArticles {
+  return articles.reduce<GroupedArticles>((acc, article) => {
+    const domain = article.domain || "General";
+    const area = article.area || "General";
+    const category = article.category || "Uncategorized";
+
+    acc[domain] ??= {};
+    acc[domain][area] ??= {};
+    acc[domain][area][category] ??= [];
+    acc[domain][area][category].push(article);
+    return acc;
+  }, {});
+}

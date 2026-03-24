@@ -1,212 +1,76 @@
 import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import {
-  librarySelectionHref,
-  listCategoriesByDomain,
-  listContentItemsByTopic,
-  listDomains,
-  listTopicsByCategory,
-  pickById,
+  groupArticlesByDomainAreaCategory,
+  listSimpleArticles,
 } from "@/lib/library-data";
-
-function libraryHrefPartial(
-  entry: { domainId: string; categoryId?: string; topicId?: string },
-): string {
-  const q = new URLSearchParams({ domain: entry.domainId });
-  if (entry.categoryId) {
-    q.set("category", entry.categoryId);
-  }
-  if (entry.topicId) {
-    q.set("topic", entry.topicId);
-  }
-  return `/library?${q.toString()}`;
-}
 
 export const dynamic = "force-dynamic";
 
-export default async function LibraryPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ domain?: string; category?: string; topic?: string }>;
-}) {
-  const sp = await searchParams;
-
-  const domains = await listDomains();
-  const domain = pickById(domains, sp.domain);
-
-  if (!domain) {
-    return (
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Library</h1>
-        <p className="text-muted-foreground leading-relaxed">
-          No domains found. Run the Supabase schema and seed, then reload.
-        </p>
-      </div>
-    );
-  }
-
-  const categories = await listCategoriesByDomain(domain.id);
-  const category = pickById(categories, sp.category);
-
-  if (!category) {
-    return (
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Library</h1>
-        <p className="text-muted-foreground leading-relaxed">
-          No categories for this domain yet.
-        </p>
-      </div>
-    );
-  }
-
-  const topics = await listTopicsByCategory(category.id);
-  const topic = pickById(topics, sp.topic);
-
-  if (!topic) {
-    return (
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Library</h1>
-        <p className="text-muted-foreground leading-relaxed">
-          No topics in this category yet.
-        </p>
-      </div>
-    );
-  }
-
-  const items = await listContentItemsByTopic(topic.id);
+export default async function LibraryPage() {
+  const articles = await listSimpleArticles();
+  const grouped = groupArticlesByDomainAreaCategory(articles);
+  const domains = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Library</h1>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            Browse by domain, category, then topic.
-          </p>
-        </div>
-        <p className="text-muted-foreground text-xs leading-relaxed">
-          Mock teacher/student role (for future progress writes) lives on the{" "}
-          <Link
-            href="/lessons"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Lessons
-          </Link>{" "}
-          page.
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Library</h1>
+        <p className="text-muted-foreground text-sm">
+          Articles grouped by domain, area, and category.
         </p>
       </div>
 
-      <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
-        <aside className="flex w-full shrink-0 flex-col gap-6 lg:w-56">
-          <nav className="rounded-md border border-border bg-card p-4 shadow-sm">
-            <div className="mb-3 text-[0.65rem] font-semibold tracking-wider text-muted-foreground uppercase">
-              Domain
-            </div>
-            <ul className="flex flex-col gap-1">
-              {domains.map((d) => (
-                <li key={d.id}>
-                  <Link
-                    href={libraryHrefPartial({ domainId: d.id })}
-                    className={cn(
-                      "block rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted/80",
-                      d.id === domain.id &&
-                        "bg-foreground font-semibold text-background shadow-sm shadow-black/15",
-                    )}
-                  >
-                    {d.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          <nav className="rounded-md border border-border bg-card p-4 shadow-sm">
-            <div className="mb-3 text-[0.65rem] font-semibold tracking-wider text-muted-foreground uppercase">
-              Category
-            </div>
-            <ul className="flex flex-col gap-1">
-              {categories.map((c) => (
-                <li key={c.id}>
-                  <Link
-                    href={libraryHrefPartial({
-                      domainId: domain.id,
-                      categoryId: c.id,
-                    })}
-                    className={cn(
-                      "block rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted/80",
-                      c.id === category.id &&
-                        "bg-foreground font-semibold text-background shadow-sm shadow-black/15",
-                    )}
-                  >
-                    {c.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-
-          <nav className="rounded-md border border-border bg-card p-4 shadow-sm">
-            <div className="mb-3 text-[0.65rem] font-semibold tracking-wider text-muted-foreground uppercase">
-              Topic
-            </div>
-            <ul className="flex flex-col gap-1">
-              {topics.map((t) => (
-                <li key={t.id}>
-                  <Link
-                    href={librarySelectionHref({
-                      domainId: domain.id,
-                      categoryId: category.id,
-                      topicId: t.id,
-                    })}
-                    className={cn(
-                      "block rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted/80",
-                      t.id === topic.id &&
-                        "bg-foreground font-semibold text-background shadow-sm shadow-black/15",
-                    )}
-                  >
-                    {t.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </aside>
-
-        <section className="min-w-0 flex-1">
-          <div className="mb-5">
-            <h2 className="text-lg font-bold tracking-tight">Articles</h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              {topic.name.replaceAll("_", " ")} · {items.length} item
-              {items.length === 1 ? "" : "s"}
-            </p>
-          </div>
-
-          {items.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No articles for this topic yet.
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {items.map((item) => (
-                <li key={item.id}>
-                  <Link href={`/articles/${item.id}`}>
-                    <Card className="p-4 transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-black/15">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-medium">{item.title}</span>
-                        <span className="text-muted-foreground text-xs">
-                          {item.content_type} · {item.slug}
-                        </span>
-                      </div>
-                    </Card>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
+      {articles.length === 0 ? (
+        <p className="text-muted-foreground text-sm">
+          No articles found in the Supabase <code>articles</code> table yet.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {domains.map((domain) => {
+            const areas = grouped[domain];
+            const areaNames = Object.keys(areas).sort((a, b) => a.localeCompare(b));
+            return (
+              <section key={domain} className="space-y-3">
+                <h2 className="text-xl font-semibold">{domain}</h2>
+                {areaNames.map((area) => {
+                  const categories = areas[area];
+                  const categoryNames = Object.keys(categories).sort((a, b) =>
+                    a.localeCompare(b),
+                  );
+                  return (
+                    <div key={`${domain}-${area}`} className="space-y-3">
+                      <h3 className="text-base font-medium text-muted-foreground">{area}</h3>
+                      {categoryNames.map((category) => (
+                        <div key={`${domain}-${area}-${category}`} className="space-y-2">
+                          <p className="text-sm font-medium">{category}</p>
+                          <ul className="grid gap-2 sm:grid-cols-2">
+                            {categories[category].map((article) => (
+                              <li key={article.id}>
+                                <Link href={`/articles/${article.id}`}>
+                                  <Card className="p-4 transition-colors hover:bg-muted/40">
+                                    <p className="font-medium">{article.title}</p>
+                                    {article.slug ? (
+                                      <p className="text-muted-foreground mt-1 text-xs">
+                                        {article.slug}
+                                      </p>
+                                    ) : null}
+                                  </Card>
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </section>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
