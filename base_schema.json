@@ -1,0 +1,862 @@
+{
+  "columns": [
+    {
+      "table_name": "article",
+      "column_name": "id",
+      "data_type": "bigint",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "article",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "article",
+      "column_name": "article_name",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "article",
+      "column_name": "article_description",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "article",
+      "column_name": "article_number",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "article",
+      "column_name": "article_content",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "article",
+      "column_name": "article_category",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "article",
+      "column_name": "article_domain",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "category",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "category",
+      "column_name": "domain_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "category",
+      "column_name": "name",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "category",
+      "column_name": "slug",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "category",
+      "column_name": "sort_order",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "table_name": "category",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "category",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "comment",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "comment",
+      "column_name": "content_version_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "comment",
+      "column_name": "highlight_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "comment",
+      "column_name": "created_by_user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "comment",
+      "column_name": "body",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "comment",
+      "column_name": "parent_comment_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "comment",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "comment_ai_response",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "comment_ai_response",
+      "column_name": "comment_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "comment_ai_response",
+      "column_name": "provider",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": "'unknown'::text"
+    },
+    {
+      "table_name": "comment_ai_response",
+      "column_name": "body",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "comment_ai_response",
+      "column_name": "model",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "comment_ai_response",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "content_item",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "content_item",
+      "column_name": "topic_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "content_item",
+      "column_name": "content_type",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": "'article'::text"
+    },
+    {
+      "table_name": "content_item",
+      "column_name": "title",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "content_item",
+      "column_name": "slug",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "content_item",
+      "column_name": "sort_order",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "table_name": "content_item",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "content_item",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "content_item",
+      "column_name": "current_version_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "content_version",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "content_version",
+      "column_name": "content_item_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "content_version",
+      "column_name": "version_number",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "content_version",
+      "column_name": "is_latest",
+      "data_type": "boolean",
+      "is_nullable": "NO",
+      "column_default": "false"
+    },
+    {
+      "table_name": "content_version",
+      "column_name": "content_rich_json",
+      "data_type": "jsonb",
+      "is_nullable": "NO",
+      "column_default": "'{}'::jsonb"
+    },
+    {
+      "table_name": "content_version",
+      "column_name": "plain_text",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "content_version",
+      "column_name": "published_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "content_version",
+      "column_name": "addendum_markdown",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "content_version",
+      "column_name": "supersedes_version_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "content_version",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "domain",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "domain",
+      "column_name": "name",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "domain",
+      "column_name": "slug",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "domain",
+      "column_name": "sort_order",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "table_name": "domain",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "domain",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "highlight",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "highlight",
+      "column_name": "content_version_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "highlight",
+      "column_name": "plain_text_start",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "highlight",
+      "column_name": "plain_text_end",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "highlight",
+      "column_name": "created_by_user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "highlight",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "learner_profile",
+      "column_name": "user_id",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "learner_profile",
+      "column_name": "occupation",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "learner_profile",
+      "column_name": "context",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "learner_profile",
+      "column_name": "learning_style",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "learner_profile",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "learner_profile",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "learner_progress",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "learner_progress",
+      "column_name": "user_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "learner_progress",
+      "column_name": "lesson_plan_version_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "learner_progress",
+      "column_name": "status",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": "'active'::text"
+    },
+    {
+      "table_name": "learner_progress",
+      "column_name": "started_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "learner_progress",
+      "column_name": "completed_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "learner_progress",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "learner_progress",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "lesson_item_progress",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "lesson_item_progress",
+      "column_name": "learner_progress_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "lesson_item_progress",
+      "column_name": "lesson_plan_item_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "lesson_item_progress",
+      "column_name": "article_status",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": "'pending'::text"
+    },
+    {
+      "table_name": "lesson_item_progress",
+      "column_name": "completed_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "lesson_item_progress",
+      "column_name": "completed_content_version_id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "lesson_item_progress",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "lesson_plan",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "lesson_plan",
+      "column_name": "domain_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "lesson_plan",
+      "column_name": "title",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "lesson_plan",
+      "column_name": "description",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "lesson_plan",
+      "column_name": "sort_order",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": "0"
+    },
+    {
+      "table_name": "lesson_plan",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "lesson_plan",
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "lesson_plan",
+      "column_name": "learning_goal",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "lesson_plan",
+      "column_name": "plan_kind",
+      "data_type": "text",
+      "is_nullable": "NO",
+      "column_default": "'standard'::text"
+    },
+    {
+      "table_name": "lesson_plan",
+      "column_name": "tools",
+      "data_type": "jsonb",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "lesson_plan_item",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "lesson_plan_item",
+      "column_name": "lesson_plan_version_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "lesson_plan_item",
+      "column_name": "sequence",
+      "data_type": "integer",
+      "is_nullable": "NO",
+      "column_default": null
+    },
+    {
+      "table_name": "lesson_plan_item",
+      "column_name": "requires_quiz",
+      "data_type": "boolean",
+      "is_nullable": "NO",
+      "column_default": "true"
+    },
+    {
+      "table_name": "lesson_plan_item",
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO",
+      "column_default": "now()"
+    },
+    {
+      "table_name": "lesson_plan_item",
+      "column_name": "title",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "lesson_plan_item",
+      "column_name": "learning_goal",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "lesson_plan_item",
+      "column_name": "tools",
+      "data_type": "jsonb",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "table_name": "lesson_plan_version",
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()"
+    },
+    {
+      "table_name": "lesson_plan_version",
+      "column_name": "lesson_plan_id",
+      "data_type": "uuid",
+      "is_nullable": "NO",
+      "column_default": null
+    }
+  ],
+  "foreign_keys": [
+    {
+      "table_name": "topic",
+      "column_name": "category_id",
+      "foreign_table": "category",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "category",
+      "column_name": "domain_id",
+      "foreign_table": "domain",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "content_item",
+      "column_name": "topic_id",
+      "foreign_table": "topic",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "content_version",
+      "column_name": "content_item_id",
+      "foreign_table": "content_item",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "content_version",
+      "column_name": "supersedes_version_id",
+      "foreign_table": "content_version",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "content_item",
+      "column_name": "current_version_id",
+      "foreign_table": "content_version",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "lesson_plan",
+      "column_name": "domain_id",
+      "foreign_table": "domain",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "lesson_plan_version",
+      "column_name": "lesson_plan_id",
+      "foreign_table": "lesson_plan",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "lesson_plan_item",
+      "column_name": "lesson_plan_version_id",
+      "foreign_table": "lesson_plan_version",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "learner_progress",
+      "column_name": "lesson_plan_version_id",
+      "foreign_table": "lesson_plan_version",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "lesson_item_progress",
+      "column_name": "learner_progress_id",
+      "foreign_table": "learner_progress",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "lesson_item_progress",
+      "column_name": "lesson_plan_item_id",
+      "foreign_table": "lesson_plan_item",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "lesson_item_progress",
+      "column_name": "completed_content_version_id",
+      "foreign_table": "content_version",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "quiz_question",
+      "column_name": "lesson_plan_item_id",
+      "foreign_table": "lesson_plan_item",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "quiz_attempt",
+      "column_name": "lesson_item_progress_id",
+      "foreign_table": "lesson_item_progress",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "highlight",
+      "column_name": "content_version_id",
+      "foreign_table": "content_version",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "comment",
+      "column_name": "content_version_id",
+      "foreign_table": "content_version",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "comment",
+      "column_name": "highlight_id",
+      "foreign_table": "highlight",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "comment",
+      "column_name": "parent_comment_id",
+      "foreign_table": "comment",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "comment_ai_response",
+      "column_name": "comment_id",
+      "foreign_table": "comment",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "lesson_reading",
+      "column_name": "lesson_plan_item_id",
+      "foreign_table": "lesson_plan_item",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "lesson_reading",
+      "column_name": "content_item_id",
+      "foreign_table": "content_item",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "lesson_reading",
+      "column_name": "effective_content_version_id",
+      "foreign_table": "content_version",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "lesson_reading_progress",
+      "column_name": "lesson_item_progress_id",
+      "foreign_table": "lesson_item_progress",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "lesson_reading_progress",
+      "column_name": "lesson_reading_id",
+      "foreign_table": "lesson_reading",
+      "foreign_column": "id"
+    },
+    {
+      "table_name": "lesson_reading_progress",
+      "column_name": "completed_content_version_id",
+      "foreign_table": "content_version",
+      "foreign_column": "id"
+    }
+  ]
+}
