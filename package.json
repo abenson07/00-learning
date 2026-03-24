@@ -1,7 +1,0 @@
-{
-  "name": "learning-platform",
-  "private": true,
-  "scripts": {
-    "dev": "node scripts/dev-from-root.mjs"
-  }
-}
