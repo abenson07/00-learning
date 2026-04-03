@@ -1,27 +1,7 @@
 import DOMPurify from "isomorphic-dompurify";
 import { notFound } from "next/navigation";
 
-import { hasSupabaseEnvConfigured } from "@/lib/supabase/env";
-import { createPublicServerClient } from "@/lib/supabase/server";
-
-async function fetchArticleById(id: string) {
-  if (!hasSupabaseEnvConfigured()) return null;
-
-  const supabase = createPublicServerClient();
-  const tableCandidates = ["article", "articles"];
-
-  for (const tableName of tableCandidates) {
-    const { data, error } = await supabase
-      .from(tableName)
-      .select("*")
-      .eq("id", id)
-      .maybeSingle();
-
-    if (!error && data) return data as Record<string, unknown>;
-  }
-
-  return null;
-}
+import { fetchArticleByRouteId } from "@/lib/articles/fetch-article-by-route-id";
 
 type ArticleViewProps = {
   params: Promise<{ id: string }>;
@@ -29,7 +9,7 @@ type ArticleViewProps = {
 
 export async function ArticleView({ params }: ArticleViewProps) {
   const { id } = await params;
-  const article = await fetchArticleById(id);
+  const article = await fetchArticleByRouteId(id);
   if (!article) notFound();
 
   const title =
