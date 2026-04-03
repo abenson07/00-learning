@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { ArticleCard } from "@/components/home/article-card";
 import { Button } from "@/components/ui/button";
 import { DOMAIN_OPTIONS, normalizeDomain } from "@/lib/articles/domain";
 import type { HomeArticle } from "@/lib/articles/types";
@@ -148,47 +149,33 @@ export function ArticlesBrowser({ articles, loadError }: ArticlesBrowserProps) {
         {categories.map((category) => (
           <section key={category} id={toAnchorId(category)} className="scroll-mt-28">
             <h2 className="mb-3 text-lg font-semibold">{category}</h2>
-            <div className="grid gap-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {groupedByCategory[category].map((article) => {
-                const cardInner = (
-                  <>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-medium text-foreground">{article.title}</h3>
-                      {article.comingSoon ? (
-                        <span className="rounded-full border border-orange-400/70 bg-orange-500/10 px-2 py-0.5 text-xs font-medium text-orange-700 dark:border-orange-500/50 dark:bg-orange-500/15 dark:text-orange-400">
-                          Coming Soon
-                        </span>
-                      ) : null}
-                    </div>
-                    {article.description ? (
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {article.description}
-                      </p>
-                    ) : null}
-                  </>
-                );
+                const meta = article.description?.trim() || null;
+                const badge = article.comingSoon
+                  ? "Coming soon"
+                  : article.domain.trim() || article.category;
 
                 if (article.comingSoon) {
                   return (
-                    <div
+                    <ArticleCard
                       key={article.id}
-                      className="rounded-lg border p-4"
-                      aria-disabled="true"
-                      aria-label={`${article.title}, coming soon`}
-                    >
-                      {cardInner}
-                    </div>
+                      title={article.title}
+                      meta={meta}
+                      badge={badge}
+                      comingSoon
+                    />
                   );
                 }
 
                 return (
-                  <Link
+                  <ArticleCard
                     key={article.id}
+                    title={article.title}
+                    meta={meta}
+                    badge={badge}
                     href={`/articles/${article.id}`}
-                    className="rounded-lg border p-4 transition-colors hover:bg-accent/40"
-                  >
-                    {cardInner}
-                  </Link>
+                  />
                 );
               })}
             </div>
