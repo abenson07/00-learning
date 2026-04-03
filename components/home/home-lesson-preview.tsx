@@ -30,6 +30,11 @@ export type HomeLessonPreviewProps = {
   ctaHref: string;
   lessons: HomeLessonPreviewLesson[];
   className?: string;
+  /**
+   * `prominent`: full card chrome (standalone).
+   * `nested`: content only, for use inside a parent panel (e.g. lesson shell on home).
+   */
+  surface?: "prominent" | "nested";
 };
 
 export function HomeLessonPreview({
@@ -39,11 +44,15 @@ export function HomeLessonPreview({
   ctaHref,
   lessons,
   className,
+  surface = "prominent",
 }: HomeLessonPreviewProps) {
   return (
     <section
       className={cn(
-        "home-lesson-preview overflow-hidden rounded-[24px] border border-border bg-card p-6 text-foreground shadow-sm shadow-sage/20 md:p-8",
+        "home-lesson-preview text-foreground",
+        surface === "prominent" &&
+          "overflow-hidden rounded-[24px] border border-border bg-card p-6 shadow-sm shadow-sage/20 md:p-8",
+        surface === "nested" && "min-w-0 overflow-visible",
         className,
       )}
       aria-labelledby="home-lesson-preview-headline"
@@ -68,7 +77,7 @@ export function HomeLessonPreview({
           </div>
         </div>
 
-        <div className="min-w-0 flex-1 overflow-hidden lg:flex lg:items-stretch">
+        <div className="min-w-0 flex-1 lg:flex lg:items-stretch">
           <div
             className="flex flex-nowrap gap-4"
             role="list"

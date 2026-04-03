@@ -4,7 +4,10 @@ import { hasSupabaseEnvConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
 import { HomeLessonPreview } from "./home-lesson-preview";
-import type { HomeLessonPreviewLesson } from "./home-lesson-preview";
+import type {
+  HomeLessonPreviewLesson,
+  HomeLessonPreviewProps,
+} from "./home-lesson-preview";
 
 const LESSONS: HomeLessonPreviewLesson[] = [
   {
@@ -71,17 +74,28 @@ const previewProps = {
   lessons: LESSONS,
 } as const;
 
+export type DashboardLessonPreviewOptions = {
+  surface?: HomeLessonPreviewProps["surface"];
+};
+
 /** Static shell for Suspense fallback (no `cookies()` / auth). */
-export function DashboardLessonPreviewFallback() {
+export function DashboardLessonPreviewFallback({
+  surface,
+}: DashboardLessonPreviewOptions = {}) {
   return (
     <HomeLessonPreview
       {...previewProps}
       greeting="Welcome back."
+      surface={surface}
     />
   );
 }
 
-export async function DashboardLessonPreview() {
+export async function DashboardLessonPreview({
+  surface,
+}: DashboardLessonPreviewOptions = {}) {
   const greeting = await resolveDashboardGreeting();
-  return <HomeLessonPreview {...previewProps} greeting={greeting} />;
+  return (
+    <HomeLessonPreview {...previewProps} greeting={greeting} surface={surface} />
+  );
 }

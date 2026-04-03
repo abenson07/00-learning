@@ -1,6 +1,4 @@
 import DOMPurify from "isomorphic-dompurify";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { hasSupabaseEnvConfigured } from "@/lib/supabase/env";
@@ -52,22 +50,13 @@ export async function ArticleView({ params }: ArticleViewProps) {
 
   return (
     <main className="mx-auto flex min-h-full w-full max-w-6xl flex-col p-4 md:p-6">
-      <article className="rounded-xl border border-border/60 bg-background/50 p-6">
-        <p className="mb-4">
-          <Link
-            href="/library"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="size-4 shrink-0" aria-hidden />
-            Back to library
-          </Link>
-        </p>
-        <h1 className="text-3xl font-semibold">{title}</h1>
+      <section className="space-y-4">
+        <h1 className="text-2xl font-semibold">{title}</h1>
         <div
-          className="article-body prose prose-neutral mt-6 max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-a:text-primary"
+          className="article-body prose prose-neutral mt-2 max-w-none dark:prose-invert prose-headings:scroll-mt-20 prose-a:text-primary"
           dangerouslySetInnerHTML={{ __html: safeHtml }}
         />
-      </article>
+      </section>
     </main>
   );
 }

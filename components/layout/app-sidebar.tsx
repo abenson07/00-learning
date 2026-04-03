@@ -67,7 +67,7 @@ export function AppSidebar({
   return (
     <aside
       className={cn(
-        "sticky top-0 hidden h-svh w-[min(100%,280px)] shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar py-6 pl-5 pr-4 text-foreground md:flex",
+        "sticky top-0 hidden h-svh w-[min(100%,280px)] shrink-0 flex-col overflow-hidden py-6 pl-5 pr-4 text-foreground md:flex",
         className,
       )}
     >

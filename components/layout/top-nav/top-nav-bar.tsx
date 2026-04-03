@@ -24,7 +24,7 @@ export function TopNavBar({
   return (
     <header
       className={cn(
-        "flex w-full items-center gap-3 border-b border-border pb-4",
+        "flex w-full items-center gap-3 pb-4",
         className,
       )}
     >

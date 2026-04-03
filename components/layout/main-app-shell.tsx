@@ -5,6 +5,10 @@ import { AppSidebar } from "./app-sidebar";
 import type { TopNavBarProps } from "./top-nav";
 import { TopNavBar } from "./top-nav";
 
+/** Visual chrome for the elevated lesson column (shared with inset panels that should match it). */
+export const lessonSurfaceCardChrome =
+  "rounded-lg border border-border/80 bg-card text-card-foreground shadow-[0_1px_2px_rgba(15,23,42,0.06),0_8px_24px_-4px_rgba(15,23,42,0.12)] md:rounded-xl";
+
 export type MainAppShellProps = {
   children: React.ReactNode;
   /** When set, replaces the default app sidebar (e.g. lesson plan rail on `/lessons/...`). */
@@ -18,6 +22,11 @@ export type MainAppShellProps = {
    * `lesson`: main column is an elevated white card (`bg-card`) with shadow on the grey shell.
    */
   mainSurface?: "default" | "lesson";
+  /**
+   * When `mainSurface="lesson"`, set true to drop outer card chrome (transparent, no border/shadow).
+   * Use on home when inner panels carry the elevation.
+   */
+  lessonMainTransparent?: boolean;
 };
 
 export function MainAppShell({
@@ -27,6 +36,7 @@ export function MainAppShell({
   sidebarClassName,
   topNav,
   mainSurface = "default",
+  lessonMainTransparent = false,
 }: MainAppShellProps) {
   const showTopNav = topNav !== false;
   const lesson = mainSurface === "lesson";
@@ -49,7 +59,14 @@ export function MainAppShell({
           )}
         >
           {lesson ? (
-            <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-border/80 bg-card text-card-foreground shadow-[0_1px_2px_rgba(15,23,42,0.06),0_8px_24px_-4px_rgba(15,23,42,0.12)] md:rounded-xl">
+            <div
+              className={cn(
+                "flex h-full min-h-0 flex-col",
+                lessonMainTransparent
+                  ? "border-0 bg-transparent shadow-none overflow-visible"
+                  : cn("overflow-hidden", lessonSurfaceCardChrome),
+              )}
+            >
               {children}
             </div>
           ) : (

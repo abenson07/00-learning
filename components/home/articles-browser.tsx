@@ -41,7 +41,7 @@ function ArticlesToolbar({
   categories: string[];
 }) {
   return (
-    <div className="sticky top-0 z-10 flex min-w-0 items-center gap-3 border-b bg-background pb-4 pt-1">
+    <div className="sticky top-0 z-10 flex min-w-0 items-center gap-3 pb-4 pt-1">
       <div
         className="inline-flex shrink-0 overflow-hidden rounded-lg border border-input bg-background"
         role="group"
