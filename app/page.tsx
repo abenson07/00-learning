@@ -1,52 +1,41 @@
 import Link from "next/link";
-import { Globe, Landmark, ShoppingBag } from "lucide-react";
+import { Suspense } from "react";
 
 import { ArticlesBrowser } from "@/components/home/articles-browser";
-import { HomeLessonPreview } from "@/components/home/home-lesson-preview";
+import {
+  DashboardLessonPreview,
+  DashboardLessonPreviewFallback,
+} from "@/components/home/dashboard-lesson-preview";
 import { MainAppShell } from "@/components/layout/main-app-shell";
 import { Button } from "@/components/ui/button";
 import { fetchArticles } from "@/lib/articles/load-articles";
-import { hasSupabaseEnvConfigured } from "@/lib/supabase/env";
-import { createClient } from "@/lib/supabase/server";
 
-async function resolveDashboardGreeting(): Promise<string> {
-  if (!hasSupabaseEnvConfigured()) {
-    return "Welcome back.";
-  }
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return "Welcome back.";
-    }
-    const meta = user.user_metadata as Record<string, unknown> | undefined;
-    const fullName = meta?.full_name ?? meta?.name;
-    if (typeof fullName === "string" && fullName.trim()) {
-      const first = fullName.trim().split(/\s+/)[0];
-      if (first) {
-        return `Welcome back, ${first}.`;
-      }
-    }
-    const email = user.email;
-    if (email) {
-      const local = email.split("@")[0];
-      if (local) {
-        return `Welcome back, ${local}.`;
-      }
-    }
-    return "Welcome back.";
-  } catch {
-    return "Welcome back.";
-  }
+function HomePageShellFallback() {
+  return (
+    <MainAppShell sidebarRecentItems={null}>
+      <main className="mx-auto flex min-h-svh w-full max-w-7xl flex-col gap-8 p-4 md:p-6">
+        <DashboardLessonPreviewFallback />
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="space-y-2">
+            <div className="h-9 w-40 animate-pulse rounded-md bg-muted" />
+            <div className="h-5 w-72 max-w-full animate-pulse rounded-md bg-muted" />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <div className="h-9 w-20 animate-pulse rounded-md bg-muted" />
+            <div className="h-9 w-28 animate-pulse rounded-md bg-muted" />
+            <div className="h-9 w-32 animate-pulse rounded-md bg-muted" />
+          </div>
+        </div>
+        <section className="rounded-lg border bg-background p-4 md:p-6">
+          <div className="h-48 animate-pulse rounded-md bg-muted" />
+        </section>
+      </main>
+    </MainAppShell>
+  );
 }
 
-export default async function HomePage() {
-  const [{ articles, loadError }, greetingLine] = await Promise.all([
-    fetchArticles(),
-    resolveDashboardGreeting(),
-  ]);
+async function HomePageContent() {
+  const { articles, loadError } = await fetchArticles();
 
   const sidebarRecentItems = articles.slice(0, 5).map((a) => ({
     href: `/articles/${a.id}`,
@@ -56,36 +45,9 @@ export default async function HomePage() {
   return (
     <MainAppShell sidebarRecentItems={sidebarRecentItems}>
       <main className="mx-auto flex min-h-svh w-full max-w-7xl flex-col gap-8 p-4 md:p-6">
-        <HomeLessonPreview
-          greeting={greetingLine}
-          headline="You've completed 5 lessons this week!"
-          ctaLabel="Resume lesson"
-          ctaHref="/lessons/1"
-          lessons={[
-            {
-              id: "preview-1",
-              index: 1,
-              title: "Going shopping",
-              variant: "upcoming",
-              illustration: <ShoppingBag strokeWidth={1.25} aria-hidden />,
-            },
-            {
-              id: "preview-2",
-              index: 2,
-              title: "Around the world",
-              variant: "active",
-              href: "/lessons/1",
-              illustration: <Globe strokeWidth={1.25} aria-hidden />,
-            },
-            {
-              id: "preview-3",
-              index: 3,
-              title: "Paris en ville",
-              variant: "upcoming",
-              illustration: <Landmark strokeWidth={1.25} aria-hidden />,
-            },
-          ]}
-        />
+        <Suspense fallback={<DashboardLessonPreviewFallback />}>
+          <DashboardLessonPreview />
+        </Suspense>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">Home</h1>
@@ -110,5 +72,13 @@ export default async function HomePage() {
         </section>
       </main>
     </MainAppShell>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<HomePageShellFallback />}>
+      <HomePageContent />
+    </Suspense>
   );
 }
