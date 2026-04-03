@@ -8,19 +8,19 @@ import type { HomeLessonPreviewLesson } from "./home-lesson-preview";
 
 const LESSONS: HomeLessonPreviewLesson[] = [
   {
-    id: "preview-1",
+    id: "preview-active",
     index: 1,
-    title: "Going shopping",
-    variant: "upcoming",
-    illustration: <ShoppingBag strokeWidth={1.25} aria-hidden />,
-  },
-  {
-    id: "preview-2",
-    index: 2,
     title: "Around the world",
     variant: "active",
     href: "/lessons/1",
     illustration: <Globe strokeWidth={1.25} aria-hidden />,
+  },
+  {
+    id: "preview-2",
+    index: 2,
+    title: "Going shopping",
+    variant: "upcoming",
+    illustration: <ShoppingBag strokeWidth={1.25} aria-hidden />,
   },
   {
     id: "preview-3",

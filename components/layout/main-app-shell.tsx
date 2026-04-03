@@ -10,13 +10,13 @@ export function MainAppShell({
 }: {
   children: React.ReactNode;
   sidebarRecentItems?: SidebarRecentItem[] | null;
-  /** Omit to hide the top bar; pass props to customize XP, streak, profile, search. */
+  /** Omit to hide the top bar; pass props to customize streak, profile, search. */
   topNav?: TopNavBarProps | false;
 }) {
   const showTopNav = topNav !== false;
 
   return (
-    <div className="flex min-h-svh w-full bg-zinc-100 dark:bg-zinc-950">
+    <div className="flex min-h-svh w-full bg-background">
       <AppSidebar recentItems={sidebarRecentItems} />
       <div className="flex min-w-0 flex-1 flex-col">
         {showTopNav && (

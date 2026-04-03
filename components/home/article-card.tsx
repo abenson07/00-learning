@@ -21,11 +21,11 @@ export function ArticleCard(props: ArticleCardProps) {
   const body = (
     <>
       <div className="min-w-0 flex-1 space-y-1">
-        <h3 className="text-balance font-bold leading-snug tracking-tight text-white">
+        <h3 className="text-balance font-bold leading-snug tracking-tight text-foreground">
           {title}
         </h3>
         {meta ? (
-          <p className="line-clamp-2 text-sm font-normal leading-snug text-[#A0A0A0]">
+          <p className="line-clamp-2 text-sm font-normal leading-snug text-muted-foreground">
             {meta}
           </p>
         ) : null}
@@ -33,15 +33,14 @@ export function ArticleCard(props: ArticleCardProps) {
       <div className="mt-6 flex justify-end">
         <span
           className={cn(
-            "inline-flex max-w-full min-w-0 items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-white",
-            "bg-[#1E1B1B]",
+            "inline-flex max-w-full min-w-0 items-center gap-2 rounded-full border border-border bg-muted px-3 py-1.5 text-xs font-medium text-foreground",
             comingSoon && "opacity-90",
           )}
         >
           <span
             className={cn(
               "size-2 shrink-0 rounded-full",
-              comingSoon ? "bg-orange-400" : "bg-[#D14780]",
+              comingSoon ? "bg-orange-400" : "bg-brand",
             )}
             aria-hidden
           />
@@ -52,10 +51,10 @@ export function ArticleCard(props: ArticleCardProps) {
   );
 
   const shellClass = cn(
-    "flex min-h-[120px] min-w-0 flex-col rounded-2xl bg-[#2A2626] p-4 transition-[transform,box-shadow] sm:p-5",
-    "ring-1 ring-white/5",
+    "flex min-h-[120px] min-w-0 flex-col rounded-2xl border border-border bg-card p-4 transition-[transform,box-shadow] sm:p-5",
+    "shadow-sm",
     !comingSoon &&
-      "hover:brightness-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D14780] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+      "hover:border-brand/35 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background",
     comingSoon && "cursor-default opacity-95",
     className,
   );

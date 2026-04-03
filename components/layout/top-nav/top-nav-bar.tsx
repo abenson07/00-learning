@@ -10,7 +10,6 @@ export type TopNavProfileProps = ComponentProps<typeof TopNavProfile>;
 
 export type TopNavBarProps = {
   className?: string;
-  xp?: number;
   streakDays?: number;
   profile?: Partial<TopNavProfileProps>;
   searchPlaceholder?: string;
@@ -18,7 +17,6 @@ export type TopNavBarProps = {
 
 export function TopNavBar({
   className,
-  xp = 1230,
   streakDays = 0,
   profile,
   searchPlaceholder,
@@ -26,13 +24,13 @@ export function TopNavBar({
   return (
     <header
       className={cn(
-        "flex w-full items-center justify-between gap-3 border-b border-zinc-200/80 pb-4 dark:border-white/5",
+        "flex w-full items-center justify-between gap-3 border-b border-border pb-4",
         className,
       )}
     >
       <TopNavSearch placeholder={searchPlaceholder} />
       <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
-        <TopNavStatsPill xp={xp} streakDays={streakDays} />
+        <TopNavStatsPill streakDays={streakDays} />
         <TopNavProfile {...profile} />
       </div>
     </header>

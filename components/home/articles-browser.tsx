@@ -1,5 +1,6 @@
 "use client";
 
+import { Code, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -28,6 +29,77 @@ function scrollToCategorySection(category: string) {
     behavior: reduceMotion ? "auto" : "smooth",
     block: "start",
   });
+}
+
+function ArticlesToolbar({
+  selectedDomain,
+  onDomainChange,
+  categories,
+}: {
+  selectedDomain: string;
+  onDomainChange: (key: string) => void;
+  categories: string[];
+}) {
+  return (
+    <div className="sticky top-0 z-10 flex min-w-0 items-center gap-3 border-b bg-background pb-4 pt-1">
+      <div
+        className="inline-flex shrink-0 overflow-hidden rounded-lg border border-input bg-background"
+        role="group"
+        aria-label="Article domain"
+      >
+        {DOMAIN_OPTIONS.map((option, i) => (
+          <Button
+            key={option.key}
+            variant="ghost"
+            size="sm"
+            type="button"
+            aria-label={option.label}
+            aria-pressed={selectedDomain === option.key}
+            onClick={() => onDomainChange(option.key)}
+            className={cn(
+              "h-8 w-8 shrink-0 rounded-none p-0 text-xs shadow-none",
+              selectedDomain === option.key
+                ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+              i > 0 && "border-l border-border",
+            )}
+          >
+            {option.key === "ai-and-development" ? (
+              <Sparkles className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+            ) : option.key === "app-and-development" ? (
+              <Code className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+            ) : (
+              option.label
+            )}
+          </Button>
+        ))}
+      </div>
+      {categories.length > 0 && (
+        <div className="min-w-0 flex-1 overflow-x-auto overscroll-x-contain pb-1 [-webkit-overflow-scrolling:touch]">
+          <nav
+            className="flex w-max gap-2"
+            aria-label="Jump to category"
+          >
+            {categories.map((category) => (
+              <a
+                key={category}
+                className={cn(
+                  "shrink-0 rounded-full border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+                )}
+                href={`#${toAnchorId(category)}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollToCategorySection(category);
+                }}
+              >
+                {category}
+              </a>
+            ))}
+          </nav>
+        </div>
+      )}
+    </div>
+  );
 }
 
 type ArticlesBrowserProps = {
@@ -83,22 +155,12 @@ export function ArticlesBrowser({ articles, loadError }: ArticlesBrowserProps) {
 
   if (categories.length === 0) {
     return (
-      <div className="flex flex-col gap-4">
-        <div className="sticky top-0 z-10 flex flex-col gap-3 border-b bg-background pb-4 pt-1">
-          <div className="flex flex-wrap items-center gap-2">
-            {DOMAIN_OPTIONS.map((option) => (
-              <Button
-                key={option.key}
-                variant={selectedDomain === option.key ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedDomain(option.key)}
-                type="button"
-              >
-                {option.label}
-              </Button>
-            ))}
-          </div>
-        </div>
+      <div className="flex min-w-0 flex-col gap-4">
+        <ArticlesToolbar
+          selectedDomain={selectedDomain}
+          onDomainChange={setSelectedDomain}
+          categories={[]}
+        />
         <p className="text-sm text-muted-foreground">
           No articles for this domain. Try the other tab, or set{" "}
           <code className="rounded bg-muted px-1">article_domain</code> to labels like{" "}
@@ -110,40 +172,12 @@ export function ArticlesBrowser({ articles, loadError }: ArticlesBrowserProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="sticky top-0 z-10 flex flex-col gap-3 border-b bg-background pb-4 pt-1">
-        <div className="flex flex-wrap items-center gap-2">
-          {DOMAIN_OPTIONS.map((option) => (
-            <Button
-              key={option.key}
-              variant={selectedDomain === option.key ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedDomain(option.key)}
-              type="button"
-            >
-              {option.label}
-            </Button>
-          ))}
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {categories.map((category) => (
-            <a
-              key={category}
-              className={cn(
-                "shrink-0 rounded-full border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
-              )}
-              href={`#${toAnchorId(category)}`}
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToCategorySection(category);
-              }}
-            >
-              {category}
-            </a>
-          ))}
-        </div>
-      </div>
+    <div className="flex min-w-0 flex-col gap-6">
+      <ArticlesToolbar
+        selectedDomain={selectedDomain}
+        onDomainChange={setSelectedDomain}
+        categories={categories}
+      />
 
       <div className="flex flex-col gap-8">
         {categories.map((category) => (

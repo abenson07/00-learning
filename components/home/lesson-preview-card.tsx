@@ -9,9 +9,9 @@ const lessonPreviewCardVariants = cva(
     variants: {
       variant: {
         active:
-          "lesson-preview-card--active bg-[#FF4D2D] text-[#0a0a0a] shadow-lg shadow-black/15 hover:brightness-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D2D] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1f1a17]",
+          "lesson-preview-card--active bg-[#FF4D2D] text-[#0a0a0a] shadow-lg shadow-black/10 hover:brightness-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         upcoming:
-          "lesson-preview-card--upcoming cursor-default bg-white text-[#0a0a0a] shadow-sm shadow-black/5",
+          "lesson-preview-card--upcoming cursor-default border border-border bg-background text-[#0a0a0a] shadow-sm shadow-black/5",
       },
     },
     defaultVariants: {
@@ -24,7 +24,7 @@ const indexVariants = cva("text-xs font-semibold tabular-nums", {
   variants: {
     variant: {
       active: "text-[#0a0a0a]/80",
-      upcoming: "text-[#FF4D2D]",
+      upcoming: "text-brand",
     },
   },
   defaultVariants: {
