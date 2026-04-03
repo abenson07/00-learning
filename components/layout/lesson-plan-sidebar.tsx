@@ -1,11 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import type { LessonStepProgressRow } from "@/lib/curriculum/fetch-lesson-step-progress";
+import {
+  countLocalCompletedSteps,
+  completedStepKey,
+  LESSON_STEP_LOCAL_CHANGED_EVENT,
+} from "@/lib/curriculum/lesson-step-local";
 import type {
   CurriculumLesson,
   LessonPlanMeta,
@@ -15,20 +21,54 @@ import { getLessonByRouteParam } from "@/lib/curriculum/lesson-plan-data";
 export type LessonPlanSidebarProps = {
   plan: LessonPlanMeta;
   lessons: CurriculumLesson[];
+  /** From server when signed in; empty when not. */
+  initialCompletedSteps?: LessonStepProgressRow[];
+  /** When true, progress uses `initialCompletedSteps` (updates after refresh). */
+  hasSession?: boolean;
   className?: string;
 };
 
 export function LessonPlanSidebar({
   plan,
   lessons,
+  initialCompletedSteps = [],
+  hasSession = false,
   className,
 }: LessonPlanSidebarProps) {
   const params = useParams();
   const rawId = typeof params?.lessonId === "string" ? params.lessonId : undefined;
   const current = rawId ? getLessonByRouteParam(rawId, lessons) : undefined;
-  const total = lessons.length;
+
+  const totalSteps = useMemo(
+    () => lessons.reduce((sum, l) => sum + l.steps.length, 0),
+    [lessons],
+  );
+
+  const serverCompletedCount = useMemo(() => {
+    const seen = new Set<string>();
+    for (const s of initialCompletedSteps) {
+      seen.add(completedStepKey(s.lessonId, s.stepNumber));
+    }
+    return seen.size;
+  }, [initialCompletedSteps]);
+
+  const [guestCompletedCount, setGuestCompletedCount] = useState(0);
+
+  useEffect(() => {
+    if (hasSession) return;
+    const apply = () => setGuestCompletedCount(countLocalCompletedSteps(lessons));
+    apply();
+    window.addEventListener(LESSON_STEP_LOCAL_CHANGED_EVENT, apply);
+    window.addEventListener("storage", apply);
+    return () => {
+      window.removeEventListener(LESSON_STEP_LOCAL_CHANGED_EVENT, apply);
+      window.removeEventListener("storage", apply);
+    };
+  }, [hasSession, lessons]);
+
+  const completedCount = hasSession ? serverCompletedCount : guestCompletedCount;
   const progressPercent =
-    current && total > 0 ? Math.round((current.number / total) * 100) : 0;
+    totalSteps > 0 ? Math.round((completedCount / totalSteps) * 100) : 0;
 
   const lessonsInOrder = useMemo(
     () => [...lessons].sort((a, b) => a.number - b.number),
@@ -68,7 +108,7 @@ export function LessonPlanSidebar({
           <span className="text-lg font-medium text-muted-foreground">%</span>
         </div>
         <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-          course progress (by lesson)
+          course progress ({completedCount} of {totalSteps} steps)
         </p>
       </div>
 

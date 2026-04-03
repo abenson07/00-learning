@@ -10,14 +10,24 @@ import {
   StepMarkCompleteButton,
 } from "@/components/lesson/plan-step-client";
 import { Badge } from "@/components/ui/badge";
+import { completedStepKey } from "@/lib/curriculum/lesson-step-local";
 import type { CurriculumLesson, LessonPlanMeta } from "@/lib/curriculum/lesson-plan-data";
 
 type LessonContentProps = {
   plan: LessonPlanMeta;
   lesson: CurriculumLesson;
+  /** Signed-in users: keys from Supabase (`lessonId:stepNumber`). */
+  completedStepKeys?: string[];
+  useServerStepProgress?: boolean;
 };
 
-export function LessonContent({ plan, lesson }: LessonContentProps) {
+export function LessonContent({
+  plan,
+  lesson,
+  completedStepKeys = [],
+  useServerStepProgress = false,
+}: LessonContentProps) {
+  const completed = new Set(completedStepKeys);
   return (
     <main className="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-10 px-4 py-6 pb-16 md:px-6 md:py-8">
       <header className="mx-auto w-full max-w-3xl space-y-4 border-b border-border/80 pb-8">
@@ -219,7 +229,15 @@ export function LessonContent({ plan, lesson }: LessonContentProps) {
                       </div>
                     ) : null}
 
-                    <StepMarkCompleteButton lessonId={lesson.id} stepNumber={step.number} />
+                    <StepMarkCompleteButton
+                      planId={plan.id}
+                      lessonId={lesson.id}
+                      stepNumber={step.number}
+                      useServerProgress={useServerStepProgress}
+                      initialComplete={completed.has(
+                        completedStepKey(lesson.id, step.number),
+                      )}
+                    />
                   </div>
                 </article>
               </li>

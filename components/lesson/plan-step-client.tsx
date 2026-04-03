@@ -3,9 +3,15 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { FileText } from "lucide-react";
 
+import { setLessonStepComplete } from "@/app/lessons/actions";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
+import {
+  readStepCompleteFromStorage,
+  writeStepCompleteToStorage,
+} from "@/lib/curriculum/lesson-step-local";
 import { cn } from "@/lib/utils";
 
 function referencePillSubtitle(note: string): string {
@@ -130,49 +136,63 @@ export function ExamplePromptCopyLink({ promptText }: { promptText: string }) {
   );
 }
 
-const stepCompleteStorageKey = (lessonId: string, stepNumber: number) =>
-  `lesson-plan:step-complete:${lessonId}:${stepNumber}`;
-
 export function StepMarkCompleteButton({
+  planId,
   lessonId,
   stepNumber,
+  useServerProgress,
+  initialComplete = false,
 }: {
+  planId: string;
   lessonId: string;
   stepNumber: number;
+  useServerProgress: boolean;
+  /** When using server progress, seed from server-rendered completions. */
+  initialComplete?: boolean;
 }) {
-  const [complete, setComplete] = React.useState(false);
+  const router = useRouter();
+  const [complete, setComplete] = React.useState(initialComplete);
+  const [pending, setPending] = React.useState(false);
 
   React.useEffect(() => {
-    try {
-      const raw = localStorage.getItem(stepCompleteStorageKey(lessonId, stepNumber));
-      setComplete(raw === "1");
-    } catch {
-      // ignore
+    if (useServerProgress) {
+      setComplete(initialComplete);
+      return;
     }
-  }, [lessonId, stepNumber]);
+    setComplete(readStepCompleteFromStorage(lessonId, stepNumber));
+  }, [useServerProgress, initialComplete, lessonId, stepNumber]);
 
-  const toggle = React.useCallback(() => {
-    setComplete((prev) => {
-      const next = !prev;
-      try {
-        if (next) {
-          localStorage.setItem(stepCompleteStorageKey(lessonId, stepNumber), "1");
-        } else {
-          localStorage.removeItem(stepCompleteStorageKey(lessonId, stepNumber));
-        }
-      } catch {
-        // ignore
+  const toggle = React.useCallback(async () => {
+    const next = !complete;
+    if (useServerProgress) {
+      setPending(true);
+      setComplete(next);
+      const result = await setLessonStepComplete({
+        planId,
+        lessonId,
+        stepNumber,
+        complete: next,
+      });
+      if (!result.ok) {
+        setComplete(!next);
+        setPending(false);
+        return;
       }
-      return next;
-    });
-  }, [lessonId, stepNumber]);
+      router.refresh();
+      setPending(false);
+      return;
+    }
+    setComplete(next);
+    writeStepCompleteToStorage(lessonId, stepNumber, next);
+  }, [complete, useServerProgress, planId, lessonId, stepNumber, router]);
 
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={() => void toggle()}
+      disabled={pending}
       className={cn(
-        "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 font-mono text-sm text-white transition-colors",
+        "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 font-mono text-sm text-white transition-colors disabled:opacity-60",
         complete
           ? "bg-emerald-700 hover:bg-emerald-800"
           : "bg-zinc-700 hover:bg-zinc-800 dark:bg-zinc-600 dark:hover:bg-zinc-500",
