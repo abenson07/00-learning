@@ -1,10 +1,16 @@
 import { Suspense } from "react";
 
+import { getAllLessonIds } from "@/lib/curriculum/lesson-plan-data";
+
 import { LessonView } from "./lesson-view";
 
 type PageProps = {
   params: Promise<{ lessonId: string }>;
 };
+
+export function generateStaticParams() {
+  return getAllLessonIds().map((lessonId) => ({ lessonId }));
+}
 
 function LessonFallback() {
   return (

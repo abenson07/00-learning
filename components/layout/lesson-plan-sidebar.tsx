@@ -2,97 +2,24 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-
-type TaskStatus = "done" | "current" | "upcoming";
-
-type LessonTask = {
-  id: string;
-  label: string;
-  status: TaskStatus;
-};
-
-type LessonSection = {
-  index: string;
-  title: string;
-  tasks: LessonTask[];
-};
-
-/** Placeholder curriculum — replace with plan data per lesson when wired up. */
-const DEMO_PLAN: {
-  title: string;
-  progressPercent: number;
-  sections: LessonSection[];
-} = {
-  title: "Setup Stark API",
-  progressPercent: 3,
-  sections: [
-    {
-      index: "01",
-      title: "Get API Access & Credentials",
-      tasks: [
-        { id: "1a", label: "Install SDK/Dependencies", status: "done" },
-        { id: "1b", label: "Initialize Environment Variables", status: "current" },
-        { id: "1c", label: "Add Polyfills", status: "upcoming" },
-      ],
-    },
-    {
-      index: "02",
-      title: "Authenticate With Stark API",
-      tasks: [
-        { id: "2a", label: "Generate API Key", status: "upcoming" },
-        { id: "2b", label: "Configure Auth Headers", status: "upcoming" },
-        { id: "2c", label: "Verify Authentication", status: "upcoming" },
-      ],
-    },
-  ],
-};
-
-function TaskRow({ task }: { task: LessonTask }) {
-  if (task.status === "done") {
-    return (
-      <li className="flex items-start gap-2.5 text-sm text-foreground">
-        <Check
-          className="mt-0.5 size-4 shrink-0 text-emerald-500"
-          strokeWidth={2.5}
-          aria-hidden
-        />
-        <span>{task.label}</span>
-      </li>
-    );
-  }
-
-  if (task.status === "current") {
-    return (
-      <li>
-        <div
-          className={cn(
-            "rounded-full bg-muted px-3 py-1.5 text-sm text-foreground shadow-sm",
-          )}
-        >
-          <span className="text-muted-foreground">—</span> {task.label}
-        </div>
-      </li>
-    );
-  }
-
-  return (
-    <li className="flex gap-2 text-sm text-muted-foreground">
-      <span aria-hidden className="select-none">
-        —
-      </span>
-      <span>{task.label}</span>
-    </li>
-  );
-}
+import {
+  getAllLessons,
+  getLessonByRouteParam,
+  getLessonPlanMeta,
+} from "@/lib/curriculum/lesson-plan-data";
 
 export function LessonPlanSidebar({ className }: { className?: string }) {
   const params = useParams();
-  const lessonId = typeof params?.lessonId === "string" ? params.lessonId : undefined;
-
-  const plan = DEMO_PLAN;
+  const rawId = typeof params?.lessonId === "string" ? params.lessonId : undefined;
+  const plan = getLessonPlanMeta();
+  const lessons = getAllLessons();
+  const current = rawId ? getLessonByRouteParam(rawId) : undefined;
+  const total = lessons.length;
+  const progressPercent =
+    current && total > 0 ? Math.round((current.number / total) * 100) : 0;
 
   return (
     <aside
@@ -112,40 +39,89 @@ export function LessonPlanSidebar({ className }: { className?: string }) {
         <p className="text-[13px] font-medium leading-snug text-foreground">
           {plan.title}
         </p>
-        {lessonId && (
-          <p className="mt-1 text-[11px] text-muted-foreground">Lesson {lessonId}</p>
+        {current && (
+          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+            Lesson {current.number}: {current.title}
+          </p>
         )}
       </div>
 
       <div className="mt-8 border-t border-border/60 pt-6">
         <div className="flex items-baseline gap-1">
           <span className="text-4xl font-semibold tabular-nums tracking-tight text-foreground">
-            {String(plan.progressPercent).padStart(2, "0")}
+            {String(progressPercent).padStart(2, "0")}
           </span>
           <span className="text-lg font-medium text-muted-foreground">%</span>
         </div>
         <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-          progress with integration
+          course progress (by lesson)
         </p>
       </div>
 
       <nav
-        className="mt-6 flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto border-t border-border/60 pt-6 pr-1 pb-4"
-        aria-label="Lesson plan"
+        className="mt-6 flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto border-t border-border/60 pt-6 pr-1 pb-4"
+        aria-label="Lesson outline"
       >
-        {plan.sections.map((section) => (
-          <section key={section.index}>
-            <h2 className="text-[13px] font-semibold leading-snug text-foreground">
-              <span className="text-muted-foreground">{section.index}.</span>{" "}
-              {section.title}
+        {current && current.steps.length > 0 && (
+          <section>
+            <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              This lesson
             </h2>
-            <ul className="mt-3 flex flex-col gap-2.5">
-              {section.tasks.map((task) => (
-                <TaskRow key={task.id} task={task} />
+            <ol className="mt-3 flex flex-col gap-1.5">
+              {current.steps.map((step) => (
+                <li key={`${current.id}-s-${step.number}`}>
+                  <a
+                    href={`#step-${step.number}`}
+                    className="block rounded-md px-2 py-1.5 text-[13px] leading-snug text-zinc-600 transition-colors hover:bg-zinc-100/90 hover:text-zinc-900"
+                  >
+                    <span className="font-mono text-[11px] text-muted-foreground">
+                      {step.number}.
+                    </span>{" "}
+                    {step.title}
+                  </a>
+                </li>
               ))}
-            </ul>
+            </ol>
           </section>
-        ))}
+        )}
+
+        <section>
+          <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            All lessons
+          </h2>
+          <ul className="mt-3 flex flex-col gap-1">
+            {lessons.map((lesson) => {
+              const active = current?.id === lesson.id;
+              return (
+                <li key={lesson.id}>
+                  <Link
+                    href={`/lessons/${encodeURIComponent(lesson.id)}`}
+                    className={cn(
+                      "block rounded-md px-2 py-2 text-[13px] leading-snug transition-colors",
+                      active
+                        ? "bg-zinc-200/90 font-medium text-zinc-900 shadow-sm"
+                        : "text-zinc-600 hover:bg-zinc-100/90 hover:text-zinc-900",
+                    )}
+                  >
+                    <span className="font-mono text-[11px] text-zinc-500">
+                      {String(lesson.number).padStart(2, "0")}
+                    </span>{" "}
+                    {lesson.title}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        <section className="border-t border-border/60 pt-4">
+          <Link
+            href="/lesson-plan"
+            className="text-[12px] font-medium text-zinc-600 underline-offset-4 transition-colors hover:text-zinc-900 hover:underline"
+          >
+            Full lesson plan overview
+          </Link>
+        </section>
       </nav>
     </aside>
   );

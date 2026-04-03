@@ -12,6 +12,7 @@ import {
   Zap,
 } from "lucide-react";
 
+import { getDefaultLessonHref } from "@/lib/curriculum/lesson-plan-data";
 import { cn } from "@/lib/utils";
 
 export type SidebarRecentItem = {
@@ -19,9 +20,11 @@ export type SidebarRecentItem = {
   title: string;
 };
 
+const lessonsHref = getDefaultLessonHref();
+
 const primaryNav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/lessons/1", label: "Lessons", icon: GraduationCap },
+  { href: lessonsHref, label: "Lessons", icon: GraduationCap },
   { href: "/library", label: "Library", icon: Library },
 ] as const;
 
@@ -83,7 +86,7 @@ export function AppSidebar({
           const active =
             href === "/"
               ? pathname === "/"
-              : href === "/lessons/1"
+              : href === lessonsHref
                 ? pathname.startsWith("/lessons")
                 : pathname === href || pathname.startsWith(`${href}/`);
           return (

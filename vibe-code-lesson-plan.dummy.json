@@ -1,0 +1,928 @@
+{
+  "lesson_plan": {
+    "id": "dummy-lesson-plan",
+    "title": "[DUMMY] Build a Movie Tracking App",
+    "description": "[DUMMY] description: A progressive lesson plan for building a multi-user movie tracking app with Next.js and Supabase. No prior coding experience required.",
+    "lessons": [
+      {
+        "id": "lesson-01-dummy",
+        "number": 1,
+        "phase": "[DUMMY] Phase 1 — Front-end & structure",
+        "title": "[DUMMY] Project setup & first pages",
+        "subtitle": "[DUMMY] subtitle: Create your movie tracking app from scratch, build two pages, and understand how they connect to each other.",
+        "estimated_time": "~1 hour",
+        "goal": "[DUMMY] goal: A running Next.js app with a home page showing placeholder movie cards and a detail page for each movie. Clicking a card takes you to that movie's page. Nothing is real data yet — …",
+        "foundational_reading": [
+          {
+            "article_id": "DUMMY-MIND-101",
+            "title": "[DUMMY ARTICLE] What it means to build something",
+            "reason": "[DUMMY] reason: Sets the right mindset — you're directing, not coding."
+          },
+          {
+            "article_id": "DUMMY-MIND-102",
+            "title": "[DUMMY ARTICLE] You're the architect, AI is the contractor",
+            "reason": "[DUMMY] reason: Explains your relationship with Cursor before you use it."
+          },
+          {
+            "article_id": "DUMMY-WEB-101",
+            "title": "[DUMMY ARTICLE] What happens when you type a URL",
+            "reason": "[DUMMY] reason: Understand what running locally means before you do it."
+          },
+          {
+            "article_id": "DUMMY-COMP-101",
+            "title": "[DUMMY ARTICLE] What a component is",
+            "reason": "[DUMMY] reason: You'll be building components immediately — know what they are first."
+          }
+        ],
+        "steps": [
+          {
+            "number": 1,
+            "title": "[DUMMY] Install Cursor and create your project",
+            "type": "setup",
+            "type_label": "Setup · Terminal commands",
+            "content": "[DUMMY] content: If you don't have Cursor installed, download it at cursor.com and open it. This is the tool you'll use for everything — it's like a code editor, but A…",
+            "commands": [
+              "[dummy] npx create-next-app@latest movie-tracker",
+              "[dummy] cd movie-tracker"
+            ],
+            "prompt_guidance": null,
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-CURSOR-101",
+                "note": "[DUMMY] note: Read this now — it explains what Cursor is and how it differs from a regular code editor."
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 2,
+            "title": "[DUMMY] Run the app for the first time",
+            "type": "terminal",
+            "type_label": "Terminal command · Verify it works",
+            "content": "[DUMMY] content: Before you change anything, make sure the default app runs. Open Cursor's built-in browser (View → Browser) and go to localhost:3000. You should see t…",
+            "commands": [
+              "[dummy] npm run dev"
+            ],
+            "prompt_guidance": null,
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-WEB-105",
+                "note": "[DUMMY] note: It explains the difference between a static and dynamic site, and what running locally actually mean…"
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 3,
+            "title": "[DUMMY] Build the home page — movie card grid",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Components",
+            "content": "[DUMMY] content: Now you'll ask Cursor to build your first real page. Open the chat panel and describe what you want. Before prompting, read CURSOR-102 so you understa…",
+            "commands": [],
+            "prompt_guidance": "[DUMMY] guidance: Describe the page layout, what each card shows, that data should be hardcoded as an array, and that …",
+            "example_prompt": "[DUMMY] example_prompt: Build a home page at app/page.tsx for a movie tracking app. Create a responsive grid of movie cards using Tailwind CSS —…",
+            "browser_check": "[DUMMY] browser_check: After Cursor applies its changes, look at localhost:3000 in the built-in browser. You should see a g…",
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-CURSOR-102",
+                "note": "[DUMMY] note: Read before prompting — it explains how the chat panel works."
+              },
+              {
+                "article_id": "DUMMY-COMP-102",
+                "note": "[DUMMY] note: Read after this step — it explains props, which is how your movie data is being passed into each car…"
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 4,
+            "title": "[DUMMY] Build the movie detail page",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Routing",
+            "content": "[DUMMY] content: Now you'll add a second page — a detail view for each movie. Before prompting, read COMP-205 to understand how Next.js handles routing and what a dyna…",
+            "commands": [],
+            "prompt_guidance": "[DUMMY] guidance: Tell Cursor you want a dynamic route for movie detail pages, that clicking a card should navigate th…",
+            "example_prompt": "[DUMMY] example_prompt: Add a dynamic movie detail page at app/movies/[id]/page.tsx. Add a unique id field to each movie in the hardcoded array.…",
+            "browser_check": "[DUMMY] browser_check: Click a movie card on the home page. You should land on a detail page showing that movie's title. Th…",
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-COMP-205",
+                "note": "[DUMMY] note: Read before prompting — it explains how Next.js dynamic routing works and why the [id] in the filena…"
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 5,
+            "title": "[DUMMY] Add a navigation header",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Layout",
+            "content": "[DUMMY] content: A navigation bar that lives across all pages will make this feel like a real app. In Next.js this goes in the root layout file so it renders on every …",
+            "commands": [],
+            "prompt_guidance": "[DUMMY] guidance: Ask for a simple header component with the app name and a home link, added to the root layout. Descr…",
+            "example_prompt": "[DUMMY] example_prompt: Add a simple navigation header to app/layout.tsx. It should show the app name \"MovieTracker\" on the left and a link back…",
+            "browser_check": "[DUMMY] browser_check: The header should now appear on both the home page and the detail page. Click the home link from a d…",
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-FOUND-101",
+                "note": "[DUMMY] note: Read if anything about the structure Cursor wrote looks unfamiliar."
+              },
+              {
+                "article_id": "DUMMY-FOUND-102",
+                "note": "[DUMMY] note: Read if anything about the styling Cursor wrote looks unfamiliar."
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 6,
+            "title": "[DUMMY] Polish — fix anything that looks off",
+            "type": "browser_review",
+            "type_label": "Cursor browser · Visual feedback",
+            "content": "[DUMMY] content: Before you wrap this lesson, spend a few minutes looking at the app as a user would. Use Cursor's browser and resize the window between mobile and des…",
+            "commands": [],
+            "prompt_guidance": "[DUMMY] guidance: Describe what you see, what you expected instead, and where on the page the issue is. You don't need…",
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [],
+            "concept": null
+          },
+          {
+            "number": 7,
+            "title": "[DUMMY] Write your first acceptance criteria",
+            "type": "concept",
+            "type_label": "Concept · How to define done",
+            "content": "[DUMMY] content: You've just built something that works end-to-end. Before you move on, let's introduce a concept that will make every future lesson go smoother: accep…",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-TEST-103",
+                "note": "[DUMMY] note: Goes deeper on acceptance criteria and why defining done before you build leads to better features a…"
+              }
+            ],
+            "concept": {
+              "title": "[DUMMY] Acceptance criteria & user stories",
+              "body": "[DUMMY] body: Acceptance criteria is a plain-language list of conditions that define when something is finished — not 'I think it looks okay' but a specific checklist you can verify by actually using the thing you …",
+              "user_story_example": {
+                "as_a": "[dummy user]",
+                "i_want_to": "[dummy want]",
+                "so_that": "[dummy outcome]"
+              }
+            }
+          }
+        ],
+        "acceptance_criteria": [
+          "[DUMMY 1] Home page shows a grid of movie cards with a title and year …",
+          "[DUMMY 2] Grid is 2 columns on mobile and 4 columns on desktop…",
+          "[DUMMY 3] Clicking a card navigates to that movie's detail page…",
+          "[DUMMY 4] Detail page shows the correct title for the movie that was c…",
+          "[DUMMY 5] Navigation header appears on both pages…",
+          "[DUMMY 6] Clicking the home link in the header returns to the movie gr…"
+        ],
+        "completion_note": "[DUMMY] completion: The data is hardcoded — that's intentional. Next lesson you'll make the app look polished and work properly across scree…"
+      },
+      {
+        "id": "lesson-02-dummy",
+        "number": 2,
+        "phase": "[DUMMY] Phase 1 — Front-end & structure",
+        "title": "[DUMMY] Layout, styling & responsiveness",
+        "subtitle": "[DUMMY] subtitle: Make the app look good and work across screen sizes. You'll go from a rough structure to something that actually feels like a real product.",
+        "estimated_time": "~1 hour",
+        "goal": "[DUMMY] goal: A polished movie card grid that looks good on mobile and desktop. A properly laid out detail page. A consistent visual language — spacing, typography, and color that feel intention…",
+        "foundational_reading": [
+          {
+            "article_id": "DUMMY-FOUND-104",
+            "title": "[DUMMY ARTICLE] The box model",
+            "reason": "[DUMMY] reason: Everything on a page is a box. Understanding this makes spacing make sense."
+          },
+          {
+            "article_id": "DUMMY-FOUND-202",
+            "title": "[DUMMY ARTICLE] What responsive design is",
+            "reason": "[DUMMY] reason: Why building for multiple screen sizes matters and how it works conceptually."
+          },
+          {
+            "article_id": "DUMMY-LAYOUT-202",
+            "title": "[DUMMY ARTICLE] Tailwind CSS",
+            "reason": "[DUMMY] reason: You've already used it — now understand what utility-first styling actually mean…"
+          }
+        ],
+        "steps": [
+          {
+            "number": 1,
+            "title": "[DUMMY] Audit what you have",
+            "type": "browser_review",
+            "type_label": "Cursor browser · Visual review",
+            "content": "[DUMMY] content: Before prompting anything new, open Cursor's browser and look at your app with fresh eyes. Resize the window to about 375px wide — mobile width. Ask y…",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-FOUND-203",
+                "note": "[DUMMY] note: It explains breakpoints, which is the mechanism behind how layouts shift at different screen widths."
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 2,
+            "title": "[DUMMY] Improve the movie card design",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Visual design",
+            "content": "[DUMMY] content: Your cards from lesson 1 were functional but probably not beautiful. Make them feel like a real app — portrait poster on top, title and year below, a …",
+            "commands": [],
+            "prompt_guidance": "[DUMMY] guidance: Describe the poster aspect ratio, how title and year sit below it, font sizes, spacing, border radiu…",
+            "example_prompt": "[DUMMY] example_prompt: Improve the movie card component. The poster placeholder should be a 2:3 aspect ratio rectangle — portrait, like a real …",
+            "browser_check": "[DUMMY] browser_check: Cards should look noticeably better. Poster is portrait, text sits cleanly below, hovering gives fee…",
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-LAYOUT-203",
+                "note": "[DUMMY] note: It covers design tokens and CSS variables, how consistent spacing and color get applied across compo…"
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 3,
+            "title": "[DUMMY] Fix the grid layout and spacing",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Layout",
+            "content": "[DUMMY] content: Look at the overall page. Is there breathing room? Does it feel crammed or floating in space? This step is about the container — not the cards themsel…",
+            "commands": [],
+            "prompt_guidance": "[DUMMY] guidance: Describe the max width, page padding, gap between cards, column count at different sizes, and any he…",
+            "example_prompt": "[DUMMY] example_prompt: Improve the home page layout. The movie grid should have a max width of around 1200px and be centered. Add comfortable p…",
+            "browser_check": "[DUMMY] browser_check: Resize from mobile to desktop. Grid should reflow smoothly — 2 columns narrow, 4 wide. Content shoul…",
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-LAYOUT-102",
+                "note": "[DUMMY] note: Flexbox controls your layout — understanding it helps you describe problems accurately."
+              },
+              {
+                "article_id": "DUMMY-LAYOUT-103",
+                "note": "[DUMMY] note: Grid controls your layout — understanding it helps you describe problems accurately."
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 4,
+            "title": "[DUMMY] Style the detail page",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Layout",
+            "content": "[DUMMY] content: The detail page is probably just stacked text right now. Give it a proper layout — large poster left, info right on desktop, stacked on mobile.",
+            "commands": [],
+            "prompt_guidance": "[DUMMY] guidance: Describe the two-column desktop layout, how they stack on mobile, what info appears on the right, fo…",
+            "example_prompt": "[DUMMY] example_prompt: Redesign the movie detail page. On desktop: large portrait poster on the left (about 1/3 width) and movie info on the ri…",
+            "browser_check": "[DUMMY] browser_check: At desktop: poster left, info right. Narrow the window: they stack. Back link visible and works.",
+            "inline_articles": [],
+            "concept": null
+          },
+          {
+            "number": 5,
+            "title": "[DUMMY] Polish the navigation header",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Visual polish",
+            "content": "[DUMMY] content: Make the nav feel finished — consistent height, clean typography, proper spacing that aligns with the rest of the page.",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Polish the navigation header. Give it a fixed height with comfortable vertical padding. Style \"MovieTracker\" with slight…",
+            "browser_check": "[DUMMY] browser_check: The nav should feel visually connected to the page — not floating separately. Check on both mobile a…",
+            "inline_articles": [],
+            "concept": null
+          },
+          {
+            "number": 6,
+            "title": "[DUMMY] Acceptance criteria",
+            "type": "review",
+            "type_label": "Review · Define done",
+            "content": "[DUMMY] content: Before moving on, walk through the app and verify each acceptance criteria item. If anything fails, go back and fix it.",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [],
+            "concept": null
+          }
+        ],
+        "acceptance_criteria": [
+          "[DUMMY 1] Movie cards have a portrait poster placeholder with title an…",
+          "[DUMMY 2] Cards have a visible hover state…",
+          "[DUMMY 3] Home page grid has max width, is centered, has comfortable p…",
+          "[DUMMY 4] Grid is 2 columns on mobile and 4 on desktop…",
+          "[DUMMY 5] Detail page shows poster left, info right on desktop — stack…",
+          "[DUMMY 6] Navigation header is polished and consistent across pages…",
+          "[DUMMY 7] No content touches screen edges on mobile…"
+        ],
+        "completion_note": "[DUMMY] completion: Next lesson you'll replace the hardcoded array with real data from a JSON file and wire up dynamic routing properly."
+      },
+      {
+        "id": "lesson-03-dummy",
+        "number": 3,
+        "phase": "[DUMMY] Phase 1 — Front-end & structure",
+        "title": "[DUMMY] Data piping & routing with JSON",
+        "subtitle": "[DUMMY] subtitle: Replace hardcoded content with real data loaded from a file. This is your first taste of how data flows through an app.",
+        "estimated_time": "~1 hour",
+        "goal": "[DUMMY] goal: Movie data lives in a single JSON file. Both the home page and detail pages pull from it. Adding or removing a movie from the file immediately changes what appears in the app — no …",
+        "foundational_reading": [
+          {
+            "article_id": "DUMMY-DATA-101",
+            "title": "[DUMMY ARTICLE] What is data",
+            "reason": "[DUMMY] reason: The concept of stored information before you start moving it around."
+          },
+          {
+            "article_id": "DUMMY-DATA-102",
+            "title": "[DUMMY ARTICLE] Data formats",
+            "reason": "[DUMMY] reason: JSON is what you're about to use — understand what it is first."
+          },
+          {
+            "article_id": "DUMMY-JS-104",
+            "title": "[DUMMY ARTICLE] Arrays and objects",
+            "reason": "[DUMMY] reason: Your movie list is an array of objects. This explains what that means."
+          }
+        ],
+        "steps": [
+          {
+            "number": 1,
+            "title": "[DUMMY] Create the movies data file",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Data structure",
+            "content": "[DUMMY] content: Right now your movie data is scattered inside component files. Pull it into one central JSON file — any part of the app that needs movie data will rea…",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Create a data file at lib/movies.json. Each movie should have: id (a unique slug like \"the-godfather\"), title, year, des…",
+            "browser_check": null,
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-JS-103",
+                "note": "[DUMMY] note: It explains functions and imports, which is how other files will access this data file."
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 2,
+            "title": "[DUMMY] Wire the home page to the data file",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Data flow",
+            "content": "[DUMMY] content: Replace the hardcoded array in your home page with an import from the data file. The page should look identical — but data now flows from one central …",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Update app/page.tsx to import movie data from lib/movies.json instead of a hardcoded array. Remove the hardcoded movies …",
+            "browser_check": "[DUMMY] browser_check: The home page should show 12 movies with colored poster placeholders. Open movies.json and change a …",
+            "inline_articles": [],
+            "concept": null
+          },
+          {
+            "number": 3,
+            "title": "[DUMMY] Wire the detail page to the data file",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Dynamic routing",
+            "content": "[DUMMY] content: The detail page needs to find the right movie based on the URL. When you visit /movies/the-godfather it should look that movie up in the JSON and disp…",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Update the movie detail page at app/movies/[id]/page.tsx to look up the movie from lib/movies.json using the id URL para…",
+            "browser_check": "[DUMMY] browser_check: Click several different cards — each detail page should show that specific movie's real data. Visit …",
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-COMP-205",
+                "note": "[DUMMY] note: It explains how Next.js dynamic routing works and why the [id] in the filename matters."
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 4,
+            "title": "[DUMMY] Test the data flow",
+            "type": "manual_test",
+            "type_label": "Manual test · Verify",
+            "content": "[DUMMY] content: The whole point of a data file is that changing data in one place changes it everywhere. Open movies.json and make a few changes: rename a movie, chan…",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [],
+            "concept": null
+          },
+          {
+            "number": 5,
+            "title": "[DUMMY] Acceptance criteria",
+            "type": "review",
+            "type_label": "Review · Define done",
+            "content": "[DUMMY] content: Before moving on, verify each acceptance criteria item in Cursor's browser.",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [],
+            "concept": null
+          }
+        ],
+        "acceptance_criteria": [
+          "[DUMMY 1] Movie data lives in a single lib/movies.json file…",
+          "[DUMMY 2] Home page imports from that file — no hardcoded arrays in co…",
+          "[DUMMY 3] Each card shows the real title, year, and colored poster pla…",
+          "[DUMMY 4] Clicking a card loads that movie's real data on the detail p…",
+          "[DUMMY 5] Visiting /movies/fake-id shows a not-found message…",
+          "[DUMMY 6] Adding a new movie to movies.json makes it appear on the hom…"
+        ],
+        "completion_note": "[DUMMY] completion: Next lesson you'll add interactivity — a dark mode toggle and a watchlist you can add movies to."
+      },
+      {
+        "id": "lesson-04-dummy",
+        "number": 4,
+        "phase": "[DUMMY] Phase 2 — State & interactivity",
+        "title": "[DUMMY] Local state & UI interactions",
+        "subtitle": "[DUMMY] subtitle: Make the app interactive. You'll add a dark mode toggle and a watchlist — your first experience with state, which is data that changes while the app i…",
+        "estimated_time": "~1 hour",
+        "goal": "[DUMMY] goal: A working dark mode toggle that persists between page loads. An Add to watchlist button on each movie. A /watchlist page showing movies you've added. State resets on full browser r…",
+        "foundational_reading": [
+          {
+            "article_id": "DUMMY-COMP-103",
+            "title": "[DUMMY ARTICLE] State: data that changes over time",
+            "reason": "[DUMMY] reason: The core concept behind everything interactive in this lesson."
+          },
+          {
+            "article_id": "DUMMY-JS-105",
+            "title": "[DUMMY ARTICLE] Events and interactivity",
+            "reason": "[DUMMY] reason: How user actions like clicks trigger things to happen."
+          },
+          {
+            "article_id": "DUMMY-COMP-202",
+            "title": "[DUMMY ARTICLE] React hooks: the concept",
+            "reason": "[DUMMY] reason: useState is what you'll use — understand what it does before Cursor writes it."
+          }
+        ],
+        "steps": [
+          {
+            "number": 1,
+            "title": "[DUMMY] Add a dark mode toggle",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · State",
+            "content": "[DUMMY] content: Dark mode is a good first state exercise because it's binary — on or off — and you can see it working immediately. Tailwind has built-in dark mode sup…",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Add a dark mode toggle to the navigation header. Use Tailwind's dark mode class strategy. Store the preference in localS…",
+            "browser_check": "[DUMMY] browser_check: Toggle dark mode on and off — the whole page should switch. Refresh — the preference should persist.…",
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-JS-201",
+                "note": "[DUMMY] note: It explains asynchronous code, which touches on how localStorage reads and writes work."
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 2,
+            "title": "[DUMMY] Add Add to watchlist button",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · State",
+            "content": "[DUMMY] content: Add a button to each movie card that adds it to a watchlist. The watchlist lives in React state for now — it exists while the page is open, but resets…",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Add watchlist functionality. Create a watchlist state that holds an array of movie ids. On each movie card, add a small …",
+            "browser_check": "[DUMMY] browser_check: Click Add to watchlist on several movies. The button should visually change to Remove. Open the brow…",
+            "inline_articles": [],
+            "concept": null
+          },
+          {
+            "number": 3,
+            "title": "[DUMMY] Build the watchlist page",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · New page",
+            "content": "[DUMMY] content: Create a /watchlist page that shows only the movies you've added, reusing the same card design from the home page.",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Create a watchlist page at app/watchlist/page.tsx. It should display only movies added to the watchlist using the same M…",
+            "browser_check": "[DUMMY] browser_check: Add a few movies then navigate to /watchlist — those movies should appear. Remove one from the home …",
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-COMP-401",
+                "note": "[DUMMY] note: It explains context and global state, the more scalable version of what you're doing right now with …"
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 4,
+            "title": "[DUMMY] State vs. persistence",
+            "type": "concept",
+            "type_label": "Concept · Important distinction",
+            "content": "[DUMMY] content: Your watchlist works, but refreshing loses everything. That's because it lives in React state — memory that exists only while the page is open. Dark m…",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [],
+            "concept": {
+              "title": "[DUMMY] State vs. persistence",
+              "body": "[DUMMY] body: State is temporary — it lives in memory while the page is open. localStorage is local-only — it survives refreshes but only on your device. A database is permanent and shared — it persists across devi…"
+            }
+          },
+          {
+            "number": 5,
+            "title": "[DUMMY] Acceptance criteria",
+            "type": "review",
+            "type_label": "Review · Define done",
+            "content": "[DUMMY] content: Before moving on, verify each acceptance criteria item in Cursor's browser.",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [],
+            "concept": null
+          }
+        ],
+        "acceptance_criteria": [
+          "[DUMMY 1] Dark mode toggle switches the full page between light and da…",
+          "[DUMMY 2] Dark mode preference persists on page refresh…",
+          "[DUMMY 3] Each movie card has an Add/Remove watchlist button that refl…",
+          "[DUMMY 4] /watchlist page shows only added movies using the same card …",
+          "[DUMMY 5] Removing a movie on the home page removes it from the watchl…",
+          "[DUMMY 6] Empty watchlist shows a helpful message and link to browse…",
+          "[DUMMY 7] Watchlist resets on refresh — this is expected at this stage…"
+        ],
+        "completion_note": "[DUMMY] completion: Next lesson you'll sharpen your Cursor prompting skills before tackling the database."
+      },
+      {
+        "id": "lesson-05-dummy",
+        "number": 5,
+        "phase": "[DUMMY] Phase 2 — State & interactivity",
+        "title": "[DUMMY] Prompting & working with Cursor effectively",
+        "subtitle": "[DUMMY] subtitle: Before you tackle the database, pause to sharpen your most important tool: how you communicate with Cursor. Better prompts mean better results, less b…",
+        "estimated_time": "~1 hour",
+        "goal": "[DUMMY] goal: A .cursorrules file set up for your project. One existing component refactored using Cursor Agent. A clearer mental model for how to prompt effectively — context, specificity, and …",
+        "foundational_reading": [
+          {
+            "article_id": "DUMMY-PROMPT-101",
+            "title": "[DUMMY ARTICLE] What prompting is",
+            "reason": "[DUMMY] reason: The foundational framing before you apply any techniques."
+          },
+          {
+            "article_id": "DUMMY-PROMPT-102",
+            "title": "[DUMMY ARTICLE] The anatomy of a good prompt",
+            "reason": "[DUMMY] reason: Role, context, task, format, constraints — the five pieces."
+          },
+          {
+            "article_id": "DUMMY-PROMPT-103",
+            "title": "[DUMMY ARTICLE] Being specific vs. being vague",
+            "reason": "[DUMMY] reason: Why specificity gets better results."
+          },
+          {
+            "article_id": "DUMMY-CURSOR-104",
+            "title": "[DUMMY ARTICLE] Agent mode",
+            "reason": "[DUMMY] reason: You'll use this to let Cursor take multi-step actions in this lesson."
+          }
+        ],
+        "steps": [
+          {
+            "number": 1,
+            "title": "[DUMMY] Set up your .cursorrules file",
+            "type": "cursor_config",
+            "type_label": "Cursor config · Project context",
+            "content": "[DUMMY] content: A .cursorrules file is a plain text file that sits in the root of your project. Cursor reads it automatically and uses it as permanent context for eve…",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Create a .cursorrules file for this project. It's a movie tracking app built with Next.js App Router and Tailwind CSS. W…",
+            "browser_check": null,
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-CURSOR-106",
+                "note": "[DUMMY] note: It explains what .cursorrules does and how to get the most out of it."
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 2,
+            "title": "[DUMMY] Compare a vague prompt vs. a specific one",
+            "type": "exercise",
+            "type_label": "Exercise · Prompting technique",
+            "content": "[DUMMY] content: This is a practical exercise to feel the difference between a weak prompt and a strong one. You'll prompt Cursor twice for the same task — once vaguel…",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Update the MovieCard component to show a genre badge in the top-left corner of the poster placeholder. Use the first gen…",
+            "browser_check": "[DUMMY] browser_check: The specific prompt should produce exactly what you described — a genre badge, nothing else changed.…",
+            "inline_articles": [],
+            "concept": null
+          },
+          {
+            "number": 3,
+            "title": "[DUMMY] Use Agent mode to refactor a component",
+            "type": "cursor_agent",
+            "type_label": "Cursor Agent · Multi-step task",
+            "content": "[DUMMY] content: Agent mode lets Cursor take multiple steps on its own — reading files, making changes across several files, and checking its own work. You'll use it t…",
+            "commands": [],
+            "prompt_guidance": "[DUMMY] guidance: Give Agent clear instructions about where to find the current card code, where to move it, what the …",
+            "example_prompt": "[DUMMY] example_prompt: Use Agent mode: Extract the movie card UI into a standalone component at components/MovieCard.tsx. It should accept a mo…",
+            "browser_check": "[DUMMY] browser_check: The home page should look identical. Open app/page.tsx — it should be noticeably shorter, importing …",
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-CURSOR-201",
+                "note": "[DUMMY] note: Reviewing changes is a critical skill when using Agent mode."
+              },
+              {
+                "article_id": "DUMMY-CURSOR-202",
+                "note": "[DUMMY] note: Debugging is a critical skill when using Agent mode."
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 4,
+            "title": "[DUMMY] Practice the iteration loop",
+            "type": "exercise",
+            "type_label": "Exercise · Prompting technique",
+            "content": "[DUMMY] content: Pick one thing about your app that still bothers you visually and iterate on it using at least 3 rounds of prompting — each one more specific than the…",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [],
+            "concept": {
+              "title": "[DUMMY] Prompting is a loop, not a one-shot",
+              "body": "[DUMMY] body: The best AI-assisted builders don't expect a perfect result on the first prompt. They treat it like a conversation: prompt → check the result → refine → check again. Each round gets closer to what the…"
+            }
+          },
+          {
+            "number": 5,
+            "title": "[DUMMY] Acceptance criteria",
+            "type": "review",
+            "type_label": "Review · Define done",
+            "content": "[DUMMY] content: Before moving on, verify each acceptance criteria item.",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [],
+            "concept": null
+          }
+        ],
+        "acceptance_criteria": [
+          "[DUMMY 1] .cursorrules file exists in the project root with meaningful…",
+          "[DUMMY 2] MovieCard exists as a standalone component in a components/ …",
+          "[DUMMY 3] Home page imports MovieCard rather than defining it inline…",
+          "[DUMMY 4] Genre badge appears on each card…",
+          "[DUMMY 5] App looks and functions identically to before this lesson…"
+        ],
+        "completion_note": "[DUMMY] completion: Next lesson you'll connect a real database — replacing the JSON file with Supabase."
+      },
+      {
+        "id": "lesson-06-dummy",
+        "number": 6,
+        "phase": "[DUMMY] Phase 3 — Database & persistence",
+        "title": "[DUMMY] Supabase setup & first table",
+        "subtitle": "[DUMMY] subtitle: Connect the app to a real database. This is one of the biggest conceptual leaps in the course — moving from local files to persistent, cloud-hosted da…",
+        "estimated_time": "~1 hour",
+        "goal": "[DUMMY] goal: A Supabase project with a movies table. The app fetches movie data from Supabase instead of the JSON file. Adding a row in Supabase appears in the app without touching code.",
+        "foundational_reading": [
+          {
+            "article_id": "DUMMY-DATA-103",
+            "title": "[DUMMY ARTICLE] What a database is",
+            "reason": "[DUMMY] reason: The conceptual leap from a file to a real database before you touch Supabase."
+          },
+          {
+            "article_id": "DUMMY-DATA-104",
+            "title": "[DUMMY ARTICLE] Rows, columns, and tables",
+            "reason": "[DUMMY] reason: The basic unit of what you're about to create."
+          },
+          {
+            "article_id": "DUMMY-DATA-207",
+            "title": "[DUMMY ARTICLE] Environment variables",
+            "reason": "[DUMMY] reason: Your Supabase keys live here — understand why before you add them."
+          },
+          {
+            "article_id": "DUMMY-SUPA-101",
+            "title": "[DUMMY ARTICLE] What Supabase is",
+            "reason": "[DUMMY] reason: The overview before you create your account."
+          }
+        ],
+        "steps": [
+          {
+            "number": 1,
+            "title": "[DUMMY] Create a Supabase project",
+            "type": "external_setup",
+            "type_label": "Supabase dashboard · Setup",
+            "content": "[DUMMY] content: Go to supabase.com and create a free account. Create a new project — name it movie-tracker and choose a region close to you. The database password it …",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-SUPA-102",
+                "note": "[DUMMY] note: It walks through the Supabase dashboard so you know what you're looking at."
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 2,
+            "title": "[DUMMY] Create the movies table",
+            "type": "external_setup",
+            "type_label": "Supabase dashboard · Schema design",
+            "content": "[DUMMY] content: In the Supabase Table Editor, create a new table called movies. Ask Cursor to help you design the schema before you create it in Supabase. Then create…",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: I'm creating a movies table in Supabase. Based on the current lib/movies.json structure, what columns should I create an…",
+            "browser_check": null,
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-SUPA-103",
+                "note": "[DUMMY] note: It covers creating your first table in Supabase's UI."
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 3,
+            "title": "[DUMMY] Connect your app to Supabase",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Environment setup",
+            "content": "[DUMMY] content: Install the Supabase client and add your connection keys as environment variables. Go to your Supabase project → Settings → API to find your project U…",
+            "commands": [
+              "[dummy] npm install @supabase/supabase-js"
+            ],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Set up Supabase in this Next.js project. Install the client, create a lib/supabase.ts file that initializes the Supabase…",
+            "browser_check": null,
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-SEC-104",
+                "note": "[DUMMY] note: It explains why secrets in environment variables matter and what happens when they leak."
+              }
+            ],
+            "concept": null
+          },
+          {
+            "number": 4,
+            "title": "[DUMMY] Replace the JSON file with a Supabase query",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Data fetching",
+            "content": "[DUMMY] content: Update the home page to fetch movies from Supabase instead of importing from the JSON file.",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Update app/page.tsx to fetch movies from Supabase instead of importing from lib/movies.json. Use the Supabase client fro…",
+            "browser_check": "[DUMMY] browser_check: The home page should show the movies you manually added in Supabase. Go to the Table Editor and add …",
+            "inline_articles": [],
+            "concept": null
+          },
+          {
+            "number": 5,
+            "title": "[DUMMY] Populate the table from the JSON file",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Data migration",
+            "content": "[DUMMY] content: Manually adding 12 movies in Supabase's UI is tedious. Ask Cursor to write a quick script to import your existing JSON data into the table.",
+            "commands": [
+              "[dummy] node scripts/seed.js"
+            ],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Write a one-time Node.js script at scripts/seed.js that reads from lib/movies.json and inserts all movies into the Supab…",
+            "browser_check": "[DUMMY] browser_check: Check the Supabase Table Editor to confirm all 12 movies are there. Reload your app — the full list …",
+            "inline_articles": [],
+            "concept": null
+          },
+          {
+            "number": 6,
+            "title": "[DUMMY] Acceptance criteria",
+            "type": "review",
+            "type_label": "Review · Define done",
+            "content": "[DUMMY] content: Before moving on, verify each acceptance criteria item.",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [],
+            "concept": null
+          }
+        ],
+        "acceptance_criteria": [
+          "[DUMMY 1] Supabase project exists with a movies table matching the dat…",
+          "[DUMMY 2] App fetches movies from Supabase — not from the JSON file…",
+          "[DUMMY 3] All 12 movies appear on the home page…",
+          "[DUMMY 4] Adding a row in Supabase dashboard makes it appear in the ap…",
+          "[DUMMY 5] Supabase keys are in .env.local and not committed to the rep…",
+          "[DUMMY 6] Detail pages still work — each movie loads its own data…"
+        ],
+        "completion_note": "[DUMMY] completion: Next lesson you'll add CRUD — letting users add, edit, and delete movies from within the app."
+      },
+      {
+        "id": "lesson-07-dummy",
+        "number": 7,
+        "phase": "[DUMMY] Phase 3 — Database & persistence",
+        "title": "[DUMMY] CRUD — adding & managing movies",
+        "subtitle": "[DUMMY] subtitle: Let users create, update, and delete movies from within the app. This is the first time your users will be able to change data — and the first time a …",
+        "estimated_time": "~1 hour",
+        "goal": "[DUMMY] goal: An Add movie form that writes to Supabase. An edit button on the detail page. A delete option with confirmation. All changes persist on refresh.",
+        "foundational_reading": [
+          {
+            "article_id": "DUMMY-DATA-301",
+            "title": "[DUMMY ARTICLE] CRUD operations",
+            "reason": "[DUMMY] reason: Create, Read, Update, Delete — the four things you're about to build."
+          },
+          {
+            "article_id": "DUMMY-DATA-202",
+            "title": "[DUMMY ARTICLE] Queries: asking questions of your data",
+            "reason": "[DUMMY] reason: You've been reading data — now you'll write it too."
+          },
+          {
+            "article_id": "DUMMY-JS-202",
+            "title": "[DUMMY ARTICLE] What a promise is",
+            "reason": "[DUMMY] reason: Writing to a database is async — this explains the mental model."
+          }
+        ],
+        "steps": [
+          {
+            "number": 1,
+            "title": "[DUMMY] Build the add movie form",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Create",
+            "content": "[DUMMY] content: Create a form at /movies/new that lets a user fill in movie details and submit them to Supabase. On success it should redirect to the home page where …",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Create an \"Add Movie\" page at app/movies/new/page.tsx. It should be a form with fields for title, year, description, gen…",
+            "browser_check": "[DUMMY] browser_check: Fill in the form and submit. Navigate to the home page — the new movie should appear. Check the Supa…",
+            "inline_articles": [],
+            "concept": null
+          },
+          {
+            "number": 2,
+            "title": "[DUMMY] Add edit functionality",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Update",
+            "content": "[DUMMY] content: From the movie detail page, a user should be able to edit the movie's details. The easiest pattern is an edit page that pre-fills the form with existi…",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Add an \"Edit\" button to the movie detail page that navigates to app/movies/[id]/edit/page.tsx. The edit page should be a…",
+            "browser_check": "[DUMMY] browser_check: Click Edit on any movie. The form should pre-fill with that movie's current data. Change the title a…",
+            "inline_articles": [],
+            "concept": null
+          },
+          {
+            "number": 3,
+            "title": "[DUMMY] Add delete functionality",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Delete",
+            "content": "[DUMMY] content: Deleting is permanent. Make sure there's a confirmation step so users can't accidentally delete things.",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Add a Delete button to the movie detail page. When clicked, show a confirmation dialog — \"Are you sure you want to delet…",
+            "browser_check": "[DUMMY] browser_check: Click Delete on a movie. Confirmation dialog appears. Cancel — nothing happens. Confirm — the movie …",
+            "inline_articles": [],
+            "concept": null
+          },
+          {
+            "number": 4,
+            "title": "[DUMMY] Optimistic UI — making the app feel fast",
+            "type": "cursor_prompt",
+            "type_label": "Cursor prompt · Perceived performance",
+            "content": "[DUMMY] content: Right now when you delete a movie, the UI waits for Supabase to confirm before updating. On a slow connection it feels sluggish. Optimistic UI means u…",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": "[DUMMY] example_prompt: Update the delete flow to be optimistic. When the user confirms deletion, immediately remove the movie from the UI witho…",
+            "browser_check": null,
+            "inline_articles": [
+              {
+                "article_id": "DUMMY-COMP-204",
+                "note": "[DUMMY] note: It covers perceived performance patterns including optimistic UI, skeleton screens, and lazy loading…"
+              }
+            ],
+            "concept": {
+              "title": "[DUMMY] What is optimistic UI?",
+              "body": "[DUMMY] body: Optimistic UI means updating the interface immediately when a user takes an action, assuming it will succeed, rather than waiting for the server to confirm. If the server fails, you roll back. You've …"
+            }
+          },
+          {
+            "number": 5,
+            "title": "[DUMMY] Acceptance criteria",
+            "type": "review",
+            "type_label": "Review · Define done",
+            "content": "[DUMMY] content: Before moving on, verify each acceptance criteria item.",
+            "commands": [],
+            "prompt_guidance": null,
+            "example_prompt": null,
+            "browser_check": null,
+            "inline_articles": [],
+            "concept": null
+          }
+        ],
+        "acceptance_criteria": [
+          "[DUMMY 1] Add Movie form creates a new row in Supabase and it appears …",
+          "[DUMMY 2] Edit form pre-fills with existing data and saves changes to …",
+          "[DUMMY 3] Delete requires confirmation and permanently removes the row…",
+          "[DUMMY 4] Deletion is optimistic — UI updates immediately…",
+          "[DUMMY 5] All changes persist on page refresh…",
+          "[DUMMY 6] Error states are handled — failed operations show a message,…"
+        ],
+        "completion_note": "[DUMMY] completion: Next lesson you'll add user accounts — so each user has their own identity, their own watchlist, and eventually their ow…"
+      }
+    ]
+  }
+}

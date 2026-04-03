@@ -1,5 +1,6 @@
 import { Globe, Landmark, ShoppingBag } from "lucide-react";
 
+import { getDefaultLessonHref } from "@/lib/curriculum/lesson-plan-data";
 import { hasSupabaseEnvConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,13 +10,15 @@ import type {
   HomeLessonPreviewProps,
 } from "./home-lesson-preview";
 
+const defaultLessonHref = getDefaultLessonHref();
+
 const LESSONS: HomeLessonPreviewLesson[] = [
   {
     id: "preview-active",
     index: 1,
     title: "Around the world",
     variant: "active",
-    href: "/lessons/1",
+    href: defaultLessonHref,
     illustration: <Globe strokeWidth={1.25} aria-hidden />,
   },
   {
@@ -70,7 +73,7 @@ async function resolveDashboardGreeting(): Promise<string> {
 const previewProps = {
   headline: "You've completed 5 lessons this week!",
   ctaLabel: "Resume lesson",
-  ctaHref: "/lessons/1",
+  ctaHref: defaultLessonHref,
   lessons: LESSONS,
 } as const;
 
