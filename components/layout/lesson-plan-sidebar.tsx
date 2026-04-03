@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -28,6 +29,11 @@ export function LessonPlanSidebar({
   const total = lessons.length;
   const progressPercent =
     current && total > 0 ? Math.round((current.number / total) * 100) : 0;
+
+  const lessonsInOrder = useMemo(
+    () => [...lessons].sort((a, b) => a.number - b.number),
+    [lessons],
+  );
 
   return (
     <aside
@@ -70,38 +76,15 @@ export function LessonPlanSidebar({
         className="mt-6 flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto border-t border-border/60 pt-6 pr-1 pb-4"
         aria-label="Lesson outline"
       >
-        {current && current.steps.length > 0 && (
-          <section>
-            <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-              This lesson
-            </h2>
-            <ol className="mt-3 flex flex-col gap-1.5">
-              {current.steps.map((step) => (
-                <li key={`${current.id}-s-${step.number}`}>
-                  <a
-                    href={`#step-${step.number}`}
-                    className="block rounded-md px-2 py-1.5 text-[13px] leading-snug text-zinc-600 transition-colors hover:bg-zinc-100/90 hover:text-zinc-900"
-                  >
-                    <span className="font-mono text-[11px] text-muted-foreground">
-                      {step.number}.
-                    </span>{" "}
-                    {step.title}
-                  </a>
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
-
         <section>
           <h2 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            All lessons
+            Lessons
           </h2>
-          <ul className="mt-3 flex flex-col gap-1">
-            {lessons.map((lesson) => {
+          <ul className="mt-3 flex flex-col gap-0.5">
+            {lessonsInOrder.map((lesson) => {
               const active = current?.id === lesson.id;
               return (
-                <li key={lesson.id}>
+                <li key={lesson.id} className="flex flex-col">
                   <Link
                     href={`/lessons/${encodeURIComponent(lesson.id)}`}
                     className={cn(
@@ -110,12 +93,30 @@ export function LessonPlanSidebar({
                         ? "bg-zinc-200/90 font-medium text-zinc-900 shadow-sm"
                         : "text-zinc-600 hover:bg-zinc-100/90 hover:text-zinc-900",
                     )}
+                    aria-current={active ? "page" : undefined}
                   >
                     <span className="font-mono text-[11px] text-zinc-500">
                       {String(lesson.number).padStart(2, "0")}
                     </span>{" "}
                     {lesson.title}
                   </Link>
+                  {active && lesson.steps.length > 0 && (
+                    <ol className="mt-1 mb-2 ml-2 flex flex-col gap-1 border-l border-border/60 pl-3">
+                      {lesson.steps.map((step) => (
+                        <li key={`${lesson.id}-s-${step.number}`}>
+                          <a
+                            href={`#step-${step.number}`}
+                            className="block rounded-md py-1 pr-1 text-[12px] leading-snug text-zinc-600 transition-colors hover:bg-zinc-100/90 hover:text-zinc-900"
+                          >
+                            <span className="font-mono text-[10px] text-muted-foreground">
+                              {step.number}.
+                            </span>{" "}
+                            {step.title}
+                          </a>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
                 </li>
               );
             })}
