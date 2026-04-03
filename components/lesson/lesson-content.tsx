@@ -1,43 +1,21 @@
 import Link from "next/link";
-import {
-  BookMarked,
-  Check,
-  Clock,
-  ListChecks,
-  MessageSquareCode,
-  MonitorPlay,
-  Sparkles,
-  Terminal,
-} from "lucide-react";
+import { BookMarked, Clock, ListChecks } from "lucide-react";
 
 import { ArticleCard } from "@/components/home/article-card";
 import { AcceptanceCriteriaList } from "@/components/lesson/acceptance-criteria-list";
+import {
+  CopyableCommandBlock,
+  ExamplePromptCopyLink,
+  PlanReferencePills,
+  StepMarkCompleteButton,
+} from "@/components/lesson/plan-step-client";
 import { Badge } from "@/components/ui/badge";
-import { CardContent } from "@/components/ui/card";
 import type { CurriculumLesson, LessonPlanMeta } from "@/lib/curriculum/lesson-plan-data";
 
 type LessonContentProps = {
   plan: LessonPlanMeta;
   lesson: CurriculumLesson;
 };
-
-function StepTypeIcon({ type }: { type: string }) {
-  switch (type) {
-    case "setup":
-    case "terminal":
-      return <Terminal className="size-4 shrink-0 text-muted-foreground" aria-hidden />;
-    case "cursor_prompt":
-    case "cursor_agent":
-    case "cursor_config":
-      return (
-        <MessageSquareCode className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-      );
-    case "browser_review":
-      return <MonitorPlay className="size-4 shrink-0 text-muted-foreground" aria-hidden />;
-    default:
-      return <Sparkles className="size-4 shrink-0 text-muted-foreground" aria-hidden />;
-  }
-}
 
 export function LessonContent({ plan, lesson }: LessonContentProps) {
   return (
@@ -137,171 +115,134 @@ export function LessonContent({ plan, lesson }: LessonContentProps) {
         </div>
 
         <ol className="mx-auto flex w-full max-w-3xl flex-col gap-8">
-          {lesson.steps.map((step) => (
-            <li
-              key={`${lesson.id}-step-${step.number}`}
-              id={`step-${step.number}`}
-              className="scroll-mt-28"
-            >
-              <article className="relative overflow-hidden rounded-xl border border-border/80 bg-card text-card-foreground">
-                <div className="flex border-b border-border/60 bg-muted/30 px-4 py-3 md:px-5">
-                  <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                    <div className="flex min-w-0 gap-3">
-                      <span
-                        className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-zinc-200/90 text-sm font-semibold text-zinc-900"
-                        aria-hidden
-                      >
-                        {step.number}
-                      </span>
-                      <div className="min-w-0 pt-0.5">
-                        <h3 className="text-base font-semibold leading-snug text-foreground">
-                          {step.title}
-                        </h3>
-                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                          <span className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
-                            <StepTypeIcon type={step.type} />
-                            {step.type_label}
-                          </span>
-                        </div>
+          {lesson.steps.map((step) => {
+            return (
+              <li
+                key={`${lesson.id}-step-${step.number}`}
+                id={`step-${step.number}`}
+                className="scroll-mt-28"
+              >
+                <article className="relative rounded-xl border border-border/70 bg-muted/20 px-6 py-7 text-card-foreground md:px-8 md:py-8">
+                  <header className="space-y-1">
+                    <p className="text-[13px] text-muted-foreground">Step {step.number}</p>
+                    <h3 className="text-balance text-xl font-bold tracking-tight text-foreground md:text-2xl">
+                      {step.title}
+                    </h3>
+                    <p className="text-pretty text-sm text-muted-foreground">{step.type_label}</p>
+                  </header>
+
+                  <div className="mt-6 space-y-8">
+                    <div className="space-y-3 text-[15px] leading-relaxed text-foreground">
+                      {step.content.split(/\n\n+/).map((para, i) => (
+                        <p key={i} className="text-pretty">
+                          {para}
+                        </p>
+                      ))}
+                    </div>
+
+                    {step.inline_articles.length > 0 ? (
+                      <PlanReferencePills articles={step.inline_articles} />
+                    ) : null}
+
+                    {step.commands.length > 0 ? (
+                      <CopyableCommandBlock
+                        commandText={step.commands.join("\n")}
+                        exampleOutput={step.command_example_output ?? null}
+                      />
+                    ) : null}
+
+                    {step.prompt_guidance ? (
+                      <div>
+                        <p className="text-[13px] text-muted-foreground">Prompt guidance</p>
+                        <p className="mt-2 text-pretty text-[15px] leading-relaxed text-foreground">
+                          {step.prompt_guidance}
+                        </p>
+                        {step.example_prompt ? (
+                          <ExamplePromptCopyLink promptText={step.example_prompt} />
+                        ) : null}
                       </div>
-                    </div>
+                    ) : null}
+
+                    {!step.prompt_guidance && step.example_prompt ? (
+                      <div>
+                        <p className="text-[13px] text-muted-foreground">Example prompt</p>
+                        <ExamplePromptCopyLink promptText={step.example_prompt} />
+                      </div>
+                    ) : null}
+
+                    {step.browser_check ? (
+                      <div>
+                        <p className="text-[13px] text-muted-foreground">Browser check</p>
+                        <p className="mt-2 text-pretty text-[15px] leading-relaxed text-foreground">
+                          {step.browser_check}
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {step.concept ? (
+                      <div className="rounded-xl border border-border/80 bg-background/60 px-4 py-4 md:px-5 md:py-5">
+                        <p className="text-[13px] text-muted-foreground">Concept</p>
+                        <p className="mt-2 text-base font-semibold text-foreground">
+                          {step.concept.title}
+                        </p>
+                        <p className="mt-2 text-sm leading-relaxed text-foreground/90">
+                          {step.concept.body}
+                        </p>
+                        {step.concept.user_story_example ? (
+                          <dl className="mt-4 space-y-2 rounded-lg border border-border/60 bg-muted/30 p-3 text-sm">
+                            <div>
+                              <dt className="text-[11px] font-medium uppercase text-muted-foreground">
+                                As a
+                              </dt>
+                              <dd className="mt-0.5 text-foreground">
+                                {step.concept.user_story_example.as_a}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-[11px] font-medium uppercase text-muted-foreground">
+                                I want to
+                              </dt>
+                              <dd className="mt-0.5 text-foreground">
+                                {step.concept.user_story_example.i_want_to}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-[11px] font-medium uppercase text-muted-foreground">
+                                So that
+                              </dt>
+                              <dd className="mt-0.5 text-foreground">
+                                {step.concept.user_story_example.so_that}
+                              </dd>
+                            </div>
+                          </dl>
+                        ) : null}
+                      </div>
+                    ) : null}
+
+                    <StepMarkCompleteButton lessonId={lesson.id} stepNumber={step.number} />
                   </div>
-                </div>
-
-                <CardContent className="space-y-5 px-4 py-5 md:px-5">
-                  <div className="prose prose-neutral max-w-none text-[15px] leading-relaxed dark:prose-invert prose-p:my-3 prose-p:text-foreground/95 first:prose-p:mt-0 last:prose-p:mb-0">
-                    {step.content.split(/\n\n+/).map((para, i) => (
-                      <p key={i}>{para}</p>
-                    ))}
-                  </div>
-
-                  {step.commands.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        Commands
-                      </p>
-                      <pre className="overflow-x-auto rounded-lg border border-border/80 bg-muted/50 p-4 text-[13px] leading-relaxed text-foreground">
-                        <code>{step.commands.join("\n")}</code>
-                      </pre>
-                    </div>
-                  )}
-
-                  {step.prompt_guidance && (
-                    <div className="rounded-lg border border-dashed border-border bg-muted/20 px-4 py-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        Prompt guidance
-                      </p>
-                      <p className="mt-2 text-sm leading-relaxed text-foreground">
-                        {step.prompt_guidance}
-                      </p>
-                    </div>
-                  )}
-
-                  {step.example_prompt && (
-                    <div className="rounded-lg border border-border/80 bg-sage/15 px-4 py-3 dark:bg-sage/10">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-sage-foreground">
-                        Example prompt
-                      </p>
-                      <p className="mt-2 whitespace-pre-wrap font-mono text-[13px] leading-relaxed text-foreground">
-                        {step.example_prompt}
-                      </p>
-                    </div>
-                  )}
-
-                  {step.browser_check && (
-                    <div className="rounded-lg border border-brand/25 bg-brand/[0.06] px-4 py-3 dark:bg-brand/10">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground/80">
-                        Browser check
-                      </p>
-                      <p className="mt-2 text-sm leading-relaxed text-foreground">
-                        {step.browser_check}
-                      </p>
-                    </div>
-                  )}
-
-                  {step.inline_articles.length > 0 && (
-                    <div className="space-y-2 border-t border-border/60 pt-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        Related articles
-                      </p>
-                      <ul className="flex flex-col gap-2">
-                        {step.inline_articles.map((a) => (
-                          <li
-                            key={a.article_id}
-                            className="flex flex-col gap-0.5 rounded-md bg-muted/40 px-3 py-2 text-sm"
-                          >
-                            <Link
-                              href={`/articles/${encodeURIComponent(a.article_id)}`}
-                              className="font-medium text-foreground underline-offset-4 hover:underline"
-                            >
-                              {a.article_id}
-                            </Link>
-                            <span className="text-[13px] text-muted-foreground">{a.note}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {step.concept && (
-                    <div className="rounded-xl border border-border bg-secondary/40 px-4 py-4 dark:bg-secondary/20">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                        Concept
-                      </p>
-                      <p className="mt-2 text-base font-semibold text-foreground">
-                        {step.concept.title}
-                      </p>
-                      <p className="mt-2 text-sm leading-relaxed text-foreground/90">
-                        {step.concept.body}
-                      </p>
-                      {step.concept.user_story_example && (
-                        <dl className="mt-4 space-y-2 rounded-lg border border-border/60 bg-card/80 p-3 text-sm">
-                          <div>
-                            <dt className="text-[11px] font-medium uppercase text-muted-foreground">
-                              As a
-                            </dt>
-                            <dd className="mt-0.5 text-foreground">
-                              {step.concept.user_story_example.as_a}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt className="text-[11px] font-medium uppercase text-muted-foreground">
-                              I want to
-                            </dt>
-                            <dd className="mt-0.5 text-foreground">
-                              {step.concept.user_story_example.i_want_to}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt className="text-[11px] font-medium uppercase text-muted-foreground">
-                              So that
-                            </dt>
-                            <dd className="mt-0.5 text-foreground">
-                              {step.concept.user_story_example.so_that}
-                            </dd>
-                          </div>
-                        </dl>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </article>
-            </li>
-          ))}
+                </article>
+              </li>
+            );
+          })}
         </ol>
       </section>
 
       <section
-        className="mx-auto w-full max-w-3xl space-y-4 rounded-xl border border-border/80 bg-card p-5 text-card-foreground shadow-[0_1px_2px_rgba(15,23,42,0.06),0_8px_24px_-4px_rgba(15,23,42,0.08)] md:p-6"
+        className="mx-auto w-full max-w-3xl space-y-4 rounded-xl border border-border/70 bg-muted/20 px-6 py-7 text-card-foreground md:px-8 md:py-8"
         aria-labelledby="acceptance-heading"
       >
-        <div className="flex items-center gap-2">
-          <Check className="size-5 text-zinc-500" strokeWidth={2} aria-hidden />
-          <h2 id="acceptance-heading" className="text-lg font-semibold tracking-tight">
-            Acceptance criteria
-          </h2>
-        </div>
+        <h2
+          id="acceptance-heading"
+          className="text-[13px] font-normal text-muted-foreground"
+        >
+          Acceptance criteria
+        </h2>
+        <p className="text-[15px] font-medium text-foreground">Here&apos;s how you test it:</p>
         <AcceptanceCriteriaList lessonId={lesson.id} items={lesson.acceptance_criteria} />
+        <p className="text-pretty text-sm leading-relaxed text-foreground">
+          If any of this doesn&apos;t work, prompt Cursor to fix it.
+        </p>
       </section>
 
       <footer className="mx-auto w-full max-w-3xl rounded-xl border border-border/80 border-l-4 border-l-sage bg-muted/30 px-4 py-4 md:px-5">

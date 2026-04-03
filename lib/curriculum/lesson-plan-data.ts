@@ -20,6 +20,8 @@ export type LessonStep = {
   type_label: string;
   content: string;
   commands: string[];
+  /** Optional sample terminal output shown under the command (educational). */
+  command_example_output?: string | null;
   prompt_guidance: string | null;
   example_prompt: string | null;
   browser_check: string | null;

@@ -21,5 +21,5 @@ export async function LessonView({ params }: LessonViewProps) {
     notFound();
   }
   const plan = getLessonPlanMeta(content);
-  return <LessonContent plan={plan} lesson={lesson} />;
+  return <LessonContent key={lesson.id} plan={plan} lesson={lesson} />;
 }

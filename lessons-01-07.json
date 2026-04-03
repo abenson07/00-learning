@@ -65,6 +65,7 @@
             "commands": [
               "npm run dev"
             ],
+            "command_example_output": "⚠️ Port 3000 is in use by process 320, using available port 3002 instead.\n▲ Next.js 16.2.1 (Turbopack)\n- Local: http://localhost:3002",
             "prompt_guidance": null,
             "example_prompt": null,
             "browser_check": null,
