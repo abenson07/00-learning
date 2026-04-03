@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { ArticleCard } from "@/components/home/article-card";
+import { AcceptanceCriteriaList } from "@/components/lesson/acceptance-criteria-list";
 import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
 import type { CurriculumLesson, LessonPlanMeta } from "@/lib/curriculum/lesson-plan-data";
@@ -300,18 +301,7 @@ export function LessonContent({ plan, lesson }: LessonContentProps) {
             Acceptance criteria
           </h2>
         </div>
-        <ul className="space-y-3">
-          {lesson.acceptance_criteria.map((line, i) => (
-            <li key={i} className="flex gap-3 text-[15px] leading-relaxed text-foreground">
-              <Check
-                className="mt-0.5 size-4 shrink-0 text-zinc-400"
-                strokeWidth={2.5}
-                aria-hidden
-              />
-              <span>{line}</span>
-            </li>
-          ))}
-        </ul>
+        <AcceptanceCriteriaList lessonId={lesson.id} items={lesson.acceptance_criteria} />
       </section>
 
       <footer className="mx-auto w-full max-w-3xl rounded-xl border border-border/80 border-l-4 border-l-sage bg-muted/30 px-4 py-4 md:px-5">
