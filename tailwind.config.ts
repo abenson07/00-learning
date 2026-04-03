@@ -44,10 +44,22 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        sage: {
+          DEFAULT: "hsl(var(--sage))",
+          foreground: "hsl(var(--sage-foreground))",
+        },
         brand: "hsl(var(--brand))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar))",
           border: "hsl(var(--sidebar-border))",
+        },
+        "lesson-canvas": "hsl(var(--lesson-canvas))",
+        "lesson-paper": "hsl(var(--lesson-paper))",
+        "lesson-plan": {
+          DEFAULT: "hsl(var(--lesson-plan-rail))",
+          foreground: "hsl(var(--lesson-plan-rail-foreground))",
+          muted: "hsl(var(--lesson-plan-rail-muted))",
+          surface: "hsl(var(--lesson-plan-rail-surface))",
         },
         chart: {
           "1": "hsl(var(--chart-1))",

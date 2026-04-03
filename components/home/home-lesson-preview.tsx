@@ -43,7 +43,7 @@ export function HomeLessonPreview({
   return (
     <section
       className={cn(
-        "home-lesson-preview overflow-hidden rounded-[24px] border border-border bg-card p-6 text-foreground shadow-sm shadow-brand/5 md:p-8",
+        "home-lesson-preview overflow-hidden rounded-[24px] border border-border bg-card p-6 text-foreground shadow-sm shadow-sage/20 md:p-8",
         className,
       )}
       aria-labelledby="home-lesson-preview-headline"
@@ -60,7 +60,7 @@ export function HomeLessonPreview({
           <div>
             <Link
               href={ctaHref}
-              className="inline-flex items-center gap-2 rounded-full bg-[#FF4D2D] px-5 py-2.5 text-sm font-semibold text-[#0a0a0a] transition-[filter,transform] hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.99]"
+              className="inline-flex items-center gap-2 rounded-full bg-[#FF4D2D] px-5 py-2.5 text-sm font-semibold text-[#0a0a0a] transition-[filter,transform] hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.99]"
             >
               {ctaLabel}
               <ArrowUpRight className="size-4 shrink-0" aria-hidden />

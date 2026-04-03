@@ -40,7 +40,7 @@ export function ArticleCard(props: ArticleCardProps) {
           <span
             className={cn(
               "size-2 shrink-0 rounded-full",
-              comingSoon ? "bg-orange-400" : "bg-brand",
+              comingSoon ? "bg-orange-400" : "bg-sage",
             )}
             aria-hidden
           />
@@ -54,7 +54,7 @@ export function ArticleCard(props: ArticleCardProps) {
     "flex min-h-[120px] min-w-0 flex-col rounded-2xl border border-border bg-card p-4 transition-[transform,box-shadow] sm:p-5",
     "shadow-sm",
     !comingSoon &&
-      "hover:border-brand/35 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+      "hover:border-sage/50 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 focus-visible:ring-offset-background",
     comingSoon && "cursor-default opacity-95",
     className,
   );

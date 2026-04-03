@@ -54,8 +54,10 @@ function NavItem({
 
 export function AppSidebar({
   recentItems,
+  className,
 }: {
   recentItems?: SidebarRecentItem[] | null;
+  className?: string;
 }) {
   const pathname = usePathname();
 
@@ -66,6 +68,7 @@ export function AppSidebar({
     <aside
       className={cn(
         "sticky top-0 hidden h-svh w-[min(100%,280px)] shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar py-6 pl-5 pr-4 text-foreground md:flex",
+        className,
       )}
     >
       <Link
@@ -129,14 +132,14 @@ export function AppSidebar({
 
       <div className="relative mt-6 shrink-0 rounded-lg border border-border bg-card px-3.5 pb-4 pt-4 text-foreground shadow-sm">
         <div className="flex gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-brand/10 text-brand">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-md bg-sage/25 text-sage-foreground dark:bg-sage/15 dark:text-sage-foreground">
             <BookOpen className="size-[18px]" strokeWidth={1.75} aria-hidden />
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold leading-snug text-zinc-900">
               Level{" "}
               <Zap
-                className="inline-block size-[1em] align-[-0.08em] text-brand"
+                className="inline-block size-[1em] align-[-0.08em] text-sage-foreground"
                 strokeWidth={2}
                 aria-hidden
               />{" "}

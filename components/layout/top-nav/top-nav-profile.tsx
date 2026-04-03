@@ -19,7 +19,7 @@ export function TopNavProfile({
     <Link
       href={href}
       className={cn(
-        "block shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "block shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         className,
       )}
       aria-label={`Profile: ${name}`}

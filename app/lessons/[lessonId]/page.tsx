@@ -8,9 +8,8 @@ type PageProps = {
 
 function LessonFallback() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-4 p-4 md:flex-row md:p-6">
-      <aside className="h-32 w-full animate-pulse rounded-lg border bg-muted/30 md:w-72" />
-      <section className="flex-1 animate-pulse rounded-lg border bg-muted/30 p-6" />
+    <main className="mx-auto flex min-h-full w-full max-w-6xl flex-col p-4 md:p-6">
+      <section className="min-h-[12rem] animate-pulse rounded-lg border border-border bg-muted/30 p-6" />
     </main>
   );
 }

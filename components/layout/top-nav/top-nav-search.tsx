@@ -12,8 +12,7 @@ export function TopNavSearch({
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-1 items-center gap-3 rounded-xl border border-border bg-card px-3 py-1.5 shadow-sm dark:border-border/80 dark:bg-card/60",
-        "md:max-w-[min(100%,42rem)]",
+        "flex w-full min-w-0 max-w-[min(100%,42rem)] items-center gap-3 rounded-xl border border-border bg-card px-3 py-1.5 shadow-sm dark:border-border/80 dark:bg-card/60",
         className,
       )}
     >

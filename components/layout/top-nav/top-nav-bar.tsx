@@ -24,12 +24,14 @@ export function TopNavBar({
   return (
     <header
       className={cn(
-        "flex w-full items-center justify-between gap-3 border-b border-border pb-4",
+        "flex w-full items-center gap-3 border-b border-border pb-4",
         className,
       )}
     >
-      <TopNavSearch placeholder={searchPlaceholder} />
-      <div className="flex shrink-0 items-center gap-2.5 sm:gap-3">
+      <div className="flex min-w-0 flex-1 justify-start">
+        <TopNavSearch placeholder={searchPlaceholder} />
+      </div>
+      <div className="ml-auto flex shrink-0 items-center gap-2.5 sm:gap-3">
         <TopNavStatsPill streakDays={streakDays} />
         <TopNavProfile {...profile} />
       </div>
