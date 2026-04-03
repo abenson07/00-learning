@@ -10,6 +10,7 @@ import {
   Terminal,
 } from "lucide-react";
 
+import { ArticleCard } from "@/components/home/article-card";
 import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
 import type { CurriculumLesson, LessonPlanMeta } from "@/lib/curriculum/lesson-plan-data";
@@ -109,46 +110,17 @@ export function LessonContent({ plan, lesson }: LessonContentProps) {
               Foundational reading
             </h2>
           </div>
-          <ul className="flex flex-col gap-8">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {lesson.foundational_reading.map((item) => (
-              <li key={item.article_id}>
-                <article className="relative overflow-hidden rounded-xl border border-border/80 bg-card text-card-foreground">
-                  <div className="flex border-b border-border/60 bg-muted/30 px-4 py-3 md:px-5">
-                    <div className="flex min-w-0 flex-1 gap-3">
-                      <span
-                        className="flex h-9 min-w-9 max-w-[6.5rem] shrink-0 items-center justify-center rounded-lg bg-zinc-200/90 px-2 font-mono text-[10px] font-semibold uppercase leading-none tracking-wide text-zinc-900 sm:max-w-none sm:px-2.5 sm:text-[11px]"
-                        aria-label={`Article ${item.article_id}`}
-                      >
-                        {item.article_id}
-                      </span>
-                      <div className="min-w-0 pt-0.5">
-                        <h3 className="text-base font-semibold leading-snug text-foreground">
-                          <Link
-                            href={`/articles/${encodeURIComponent(item.article_id)}`}
-                            className="transition-colors hover:text-brand hover:underline"
-                          >
-                            {item.title}
-                          </Link>
-                        </h3>
-                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                          <span className="inline-flex items-center gap-1.5 text-[12px] text-muted-foreground">
-                            <BookMarked className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
-                            Foundational article
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <CardContent className="space-y-5 px-4 py-5 md:px-5">
-                    <div className="prose prose-neutral max-w-none text-[15px] leading-relaxed dark:prose-invert prose-p:my-0 prose-p:text-foreground/95">
-                      <p>{item.reason}</p>
-                    </div>
-                  </CardContent>
-                </article>
-              </li>
+              <ArticleCard
+                key={item.article_id}
+                title={item.title}
+                meta={item.reason}
+                badge={item.article_id}
+                href={`/articles/${encodeURIComponent(item.article_id)}`}
+              />
             ))}
-          </ul>
+          </div>
         </section>
       )}
 
