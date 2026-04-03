@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { getAllLessonIds } from "@/lib/curriculum/lesson-plan-data";
+import { STATIC_LESSON_IDS } from "@/lib/curriculum/curriculum-defaults";
 
 import { LessonView } from "./lesson-view";
 
@@ -9,7 +9,7 @@ type PageProps = {
 };
 
 export function generateStaticParams() {
-  return getAllLessonIds().map((lessonId) => ({ lessonId }));
+  return STATIC_LESSON_IDS.map((lessonId) => ({ lessonId }));
 }
 
 function LessonFallback() {

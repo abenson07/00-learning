@@ -1,26 +1,4 @@
-import curriculumData from "@/vibe-code-lesson-plan.json";
-
-type RawLesson = {
-  id: string;
-  number?: number;
-  phase?: string;
-  title?: string;
-  subtitle?: string;
-  goal?: string;
-};
-
-type RawLessonPlan = {
-  id: string;
-  title?: string;
-  description?: string;
-  lessons?: RawLesson[];
-};
-
-type RawCurriculumFile = {
-  lesson_plan: RawLessonPlan;
-};
-
-const data = curriculumData as RawCurriculumFile;
+import type { LessonPlanContent } from "@/lib/curriculum/lesson-plan-data";
 
 export type SearchCourseHit = {
   kind: "course";
@@ -52,8 +30,7 @@ function normalize(s: string): string {
   return s.trim().toLowerCase();
 }
 
-export function buildSearchIndex(): CurriculumSearchIndex {
-  const plan = data.lesson_plan;
+export function buildSearchIndex(plan: LessonPlanContent): CurriculumSearchIndex {
   const courseId = plan.id ?? "course";
   const courseTitle = typeof plan.title === "string" ? plan.title : "Course";
   const courseDescription =
@@ -73,12 +50,11 @@ export function buildSearchIndex(): CurriculumSearchIndex {
   ];
 
   const lessons: SearchLessonHit[] = (plan.lessons ?? []).map((lesson) => {
-    const title = typeof lesson.title === "string" ? lesson.title : "Lesson";
-    const subtitle =
-      typeof lesson.subtitle === "string" ? lesson.subtitle : null;
-    const phase = typeof lesson.phase === "string" ? lesson.phase : null;
-    const goal = typeof lesson.goal === "string" ? lesson.goal : "";
-    const id = typeof lesson.id === "string" ? lesson.id : String(lesson.number ?? "");
+    const title = lesson.title || "Lesson";
+    const subtitle = lesson.subtitle || null;
+    const phase = lesson.phase || null;
+    const goal = lesson.goal || "";
+    const id = lesson.id || String(lesson.number ?? "");
 
     return {
       kind: "lesson",
@@ -90,26 +66,12 @@ export function buildSearchIndex(): CurriculumSearchIndex {
       phase,
       href: `/lessons/${encodeURIComponent(id)}`,
       searchText: normalize(
-        [
-          title,
-          subtitle ?? "",
-          phase ?? "",
-          goal,
-          courseTitle,
-        ].join(" "),
+        [title, subtitle ?? "", phase ?? "", goal, courseTitle].join(" "),
       ),
     };
   });
 
   return { courses, lessons };
-}
-
-/** Singleton index — curriculum JSON is static at build time. */
-let cached: CurriculumSearchIndex | null = null;
-
-export function getSearchIndex(): CurriculumSearchIndex {
-  if (!cached) cached = buildSearchIndex();
-  return cached;
 }
 
 export function filterSearchIndex(

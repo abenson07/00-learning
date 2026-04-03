@@ -12,10 +12,12 @@ import {
   getAllLessons,
   getLessonPlanMeta,
 } from "@/lib/curriculum/lesson-plan-data";
+import { fetchLessonPlan } from "@/lib/curriculum/fetch-lesson-plan";
 
-export function LessonPlanOverview() {
-  const plan = getLessonPlanMeta();
-  const lessons = getAllLessons();
+export async function LessonPlanOverview() {
+  const content = await fetchLessonPlan();
+  const plan = getLessonPlanMeta(content);
+  const lessons = getAllLessons(content);
 
   return (
     <div className="mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-10 px-4 py-8 md:px-6 md:py-12">

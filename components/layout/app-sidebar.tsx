@@ -12,7 +12,7 @@ import {
   Zap,
 } from "lucide-react";
 
-import { getDefaultLessonHref } from "@/lib/curriculum/lesson-plan-data";
+import { DEFAULT_LESSON_HREF } from "@/lib/curriculum/curriculum-defaults";
 import { cn } from "@/lib/utils";
 
 export type SidebarRecentItem = {
@@ -20,7 +20,7 @@ export type SidebarRecentItem = {
   title: string;
 };
 
-const lessonsHref = getDefaultLessonHref();
+const lessonsHref = DEFAULT_LESSON_HREF;
 
 const primaryNav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },

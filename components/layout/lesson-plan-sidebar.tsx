@@ -5,18 +5,26 @@ import { useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import {
-  getAllLessons,
-  getLessonByRouteParam,
-  getLessonPlanMeta,
+import type {
+  CurriculumLesson,
+  LessonPlanMeta,
 } from "@/lib/curriculum/lesson-plan-data";
+import { getLessonByRouteParam } from "@/lib/curriculum/lesson-plan-data";
 
-export function LessonPlanSidebar({ className }: { className?: string }) {
+export type LessonPlanSidebarProps = {
+  plan: LessonPlanMeta;
+  lessons: CurriculumLesson[];
+  className?: string;
+};
+
+export function LessonPlanSidebar({
+  plan,
+  lessons,
+  className,
+}: LessonPlanSidebarProps) {
   const params = useParams();
   const rawId = typeof params?.lessonId === "string" ? params.lessonId : undefined;
-  const plan = getLessonPlanMeta();
-  const lessons = getAllLessons();
-  const current = rawId ? getLessonByRouteParam(rawId) : undefined;
+  const current = rawId ? getLessonByRouteParam(rawId, lessons) : undefined;
   const total = lessons.length;
   const progressPercent =
     current && total > 0 ? Math.round((current.number / total) * 100) : 0;

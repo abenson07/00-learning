@@ -1,6 +1,6 @@
 import { Globe, Landmark, ShoppingBag } from "lucide-react";
 
-import { getDefaultLessonHref } from "@/lib/curriculum/lesson-plan-data";
+import { DEFAULT_LESSON_HREF } from "@/lib/curriculum/curriculum-defaults";
 import { hasSupabaseEnvConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
@@ -10,7 +10,7 @@ import type {
   HomeLessonPreviewProps,
 } from "./home-lesson-preview";
 
-const defaultLessonHref = getDefaultLessonHref();
+const defaultLessonHref = DEFAULT_LESSON_HREF;
 
 const LESSONS: HomeLessonPreviewLesson[] = [
   {

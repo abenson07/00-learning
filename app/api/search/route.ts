@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 
 import { filterHomeArticlesByQuery } from "@/lib/articles/filter-by-query";
 import { fetchArticles } from "@/lib/articles/load-articles";
+import { fetchLessonPlan } from "@/lib/curriculum/fetch-lesson-plan";
 import {
+  buildSearchIndex,
   filterSearchIndex,
-  getSearchIndex,
   type SearchCourseHit,
   type SearchLessonHit,
 } from "@/lib/curriculum/search-index";
@@ -49,7 +50,8 @@ export async function GET(request: Request) {
     );
   }
 
-  const index = getSearchIndex();
+  const plan = await fetchLessonPlan();
+  const index = buildSearchIndex(plan);
   const { courses, lessons } = filterSearchIndex(index, q);
 
   const { articles: allArticles } = await fetchArticles();

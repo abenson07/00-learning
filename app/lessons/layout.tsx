@@ -2,6 +2,11 @@ import { Suspense } from "react";
 
 import { LessonPlanSidebar } from "@/components/layout/lesson-plan-sidebar";
 import { MainAppShell } from "@/components/layout/main-app-shell";
+import { fetchLessonPlan } from "@/lib/curriculum/fetch-lesson-plan";
+import {
+  getAllLessons,
+  getLessonPlanMeta,
+} from "@/lib/curriculum/lesson-plan-data";
 
 function LessonSidebarFallback() {
   return (
@@ -12,13 +17,20 @@ function LessonSidebarFallback() {
   );
 }
 
+async function LessonsSidebarWithData() {
+  const content = await fetchLessonPlan();
+  const plan = getLessonPlanMeta(content);
+  const lessons = getAllLessons(content);
+  return <LessonPlanSidebar plan={plan} lessons={lessons} />;
+}
+
 export default function LessonsLayout({ children }: { children: React.ReactNode }) {
   return (
     <MainAppShell
       mainSurface="lesson"
       sidebar={
         <Suspense fallback={<LessonSidebarFallback />}>
-          <LessonPlanSidebar />
+          <LessonsSidebarWithData />
         </Suspense>
       }
     >

@@ -1,5 +1,3 @@
-import curriculumFile from "@/vibe-code-lesson-plan.json";
-
 export type LessonInlineArticle = {
   article_id: string;
   note: string;
@@ -55,45 +53,33 @@ export type LessonPlanMeta = {
   description: string;
 };
 
-type RawFile = {
-  lesson_plan: {
-    id: string;
-    title: string;
-    description: string;
-    lessons: CurriculumLesson[];
-  };
+/** Payload shape stored in DB `lesson_plans.content` and in `lessons-01-07.json` → `lesson_plan`. */
+export type LessonPlanContent = {
+  id: string;
+  title: string;
+  description: string;
+  lessons: CurriculumLesson[];
 };
 
-const data = curriculumFile as RawFile;
-
-export function getLessonPlanMeta(): LessonPlanMeta {
-  const p = data.lesson_plan;
+export function getLessonPlanMeta(plan: LessonPlanContent): LessonPlanMeta {
   return {
-    id: p.id,
-    title: p.title,
-    description: p.description,
+    id: plan.id,
+    title: plan.title,
+    description: plan.description,
   };
 }
 
-export function getAllLessons(): CurriculumLesson[] {
-  return data.lesson_plan.lessons ?? [];
-}
-
-export function getAllLessonIds(): string[] {
-  return getAllLessons().map((l) => l.id);
-}
-
-/** First lesson path for nav and CTAs — stable across curriculum edits. */
-export function getDefaultLessonHref(): string {
-  const first = getAllLessons()[0];
-  return first ? `/lessons/${encodeURIComponent(first.id)}` : "/lessons";
+export function getAllLessons(plan: LessonPlanContent): CurriculumLesson[] {
+  return plan.lessons ?? [];
 }
 
 /**
  * Resolve a route param like `lesson-01`, `1`, or `01` to a canonical lesson id.
  */
-export function resolveLessonIdParam(raw: string): string | null {
-  const lessons = getAllLessons();
+export function resolveLessonIdParam(
+  raw: string,
+  lessons: CurriculumLesson[],
+): string | null {
   if (lessons.some((l) => l.id === raw)) {
     return raw;
   }
@@ -108,11 +94,17 @@ export function resolveLessonIdParam(raw: string): string | null {
   return null;
 }
 
-export function getLessonById(canonicalId: string): CurriculumLesson | undefined {
-  return getAllLessons().find((l) => l.id === canonicalId);
+export function getLessonById(
+  canonicalId: string,
+  lessons: CurriculumLesson[],
+): CurriculumLesson | undefined {
+  return lessons.find((l) => l.id === canonicalId);
 }
 
-export function getLessonByRouteParam(raw: string): CurriculumLesson | undefined {
-  const id = resolveLessonIdParam(raw);
-  return id ? getLessonById(id) : undefined;
+export function getLessonByRouteParam(
+  raw: string,
+  lessons: CurriculumLesson[],
+): CurriculumLesson | undefined {
+  const id = resolveLessonIdParam(raw, lessons);
+  return id ? getLessonById(id, lessons) : undefined;
 }
