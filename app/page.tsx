@@ -1,26 +1,27 @@
-import { Suspense } from "react";
+import Link from "next/link";
 
-import { HomeFeed } from "./home-feed";
-
-function HomeFallback() {
-  return (
-    <main className="mx-auto flex min-h-screen w-full max-w-7xl gap-4 p-4 md:p-6">
-      <aside className="hidden w-64 rounded-lg border bg-card/40 p-4 md:block" />
-      <section className="min-w-0 flex-1 animate-pulse rounded-lg border bg-muted/20 p-4 md:p-6">
-        <div className="mb-6 h-8 w-40 rounded-md bg-muted" />
-        <div className="space-y-4">
-          <div className="h-24 rounded-lg bg-muted" />
-          <div className="h-24 rounded-lg bg-muted" />
-        </div>
-      </section>
-    </main>
-  );
-}
+import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
-    <Suspense fallback={<HomeFallback />}>
-      <HomeFeed />
-    </Suspense>
+    <main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col gap-8 p-6 md:p-10">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight">Home</h1>
+        <p className="mt-2 text-muted-foreground">
+          UI overhaul scaffold — pick a section to open.
+        </p>
+      </div>
+      <nav className="flex flex-col gap-3">
+        <Button asChild variant="outline" className="justify-start">
+          <Link href="/library">Library</Link>
+        </Button>
+        <Button asChild variant="outline" className="justify-start">
+          <Link href="/lesson-plan">Lesson plan</Link>
+        </Button>
+        <Button asChild variant="outline" className="justify-start">
+          <Link href="/lessons/1">Lesson (sample)</Link>
+        </Button>
+      </nav>
+    </main>
   );
 }

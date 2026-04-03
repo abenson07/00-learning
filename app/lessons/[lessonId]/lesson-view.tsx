@@ -1,4 +1,4 @@
-import { LessonShell } from "@/components/lesson/lesson-shell";
+import { LessonDummy } from "@/components/lesson/lesson-dummy";
 
 type LessonViewProps = {
   params: Promise<{ lessonId: string }>;
@@ -6,5 +6,5 @@ type LessonViewProps = {
 
 export async function LessonView({ params }: LessonViewProps) {
   const { lessonId } = await params;
-  return <LessonShell lessonId={lessonId} />;
+  return <LessonDummy lessonId={lessonId} />;
 }

@@ -4,7 +4,7 @@ import { ArticlesBrowser } from "@/components/home/articles-browser";
 import { Button } from "@/components/ui/button";
 import { fetchArticles } from "@/lib/articles/load-articles";
 
-export async function HomeFeed() {
+export async function LibraryFeed() {
   const { articles, loadError } = await fetchArticles();
 
   return (
@@ -17,7 +17,7 @@ export async function HomeFeed() {
 
       <section className="min-w-0 flex-1 rounded-lg border p-4 md:p-6">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-2xl font-semibold">Articles</h1>
+          <h1 className="text-2xl font-semibold">Library</h1>
           <div className="flex gap-2">
             <Button asChild variant="outline" size="sm">
               <Link href="/lesson-plan">Lesson Plan</Link>
